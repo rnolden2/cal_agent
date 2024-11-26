@@ -1,0 +1,11 @@
+app/.env
+app/config/api-project.json
+app/config/config.py
+.idea
+.pytest_cache
+.readmes
+.vscode
+.task-management-api.yaml
+__pycache__
+
+misc/
