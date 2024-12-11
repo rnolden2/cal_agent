@@ -6,7 +6,7 @@ NAMC related to permanent magnet motors/generators, power conversion, and
 inverters. Additionally, it tracks announcements of relevant programs and awards.
 """
 from schema.master_schema import AgentModel
-from schema.trend_tracker import json_schema
+from .json_schema import json_schema
 from config.agent_list import AgentDescriptions
 
 class TrendTracker():

@@ -4,12 +4,12 @@ competitor information. It gathers useful details on competitors' new
 developments, locations, divisions or departments, and points of contact.
 """
 from schema.master_schema import AgentModel
-from schema.rival_watcher import json_schema, pydantic_schema
+from .json_schema import json_schema
 from config.agent_list import AgentDescriptions
 
 class RivalWatcher():
     def create_prompt(prompt:str):
-        schema_to_use = json_schema.json_schema
+        schema_to_use = json_schema
         agent_model = AgentModel(role=AgentDescriptions.RIVAL_WATCHER.value,content=prompt,agent_schema=schema_to_use, agent=AgentDescriptions.RIVAL_WATCHER.name)
         return agent_model
     
