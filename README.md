@@ -11,8 +11,6 @@ The system is an intelligent orchestration platform designed to manage and strea
 
 # Agents
 
-## Supported Agents
-
 | **Agent Name**         | **Description**                                                                                   |
 |-------------------------|---------------------------------------------------------------------------------------------------|
 | **CustomerConnect**     | Assists in drafting professional email communications.                                           |
