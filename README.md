@@ -15,7 +15,12 @@ The system is an intelligent orchestration platform designed to manage and strea
 |-------------------------|---------------------------------------------------------------------------------------------------|
 | **CustomerConnect**     | Assists in drafting professional email communications.                                           |
 | **DocumentMaster**      | Retrieves and organizes documents such as technical papers, presentations, and standards.         |
+| **Editor**      | Edits all written documentation using a custom format and writing style         |
+| **Engineer**      | Provides insights into technical terms, equations, and best practices 
+relevant to a given task.         |
 | **ProfessionalMentor**  | Provides personalized coaching for improving work performance and task prioritization.            |
 | **RivalWatcher**        | Gathers and updates information on competitors for strategic decision-making.                     |
+| **Sales**        | Provides actionable recommendations to optimize sales processes and maximize 
+business opportunities.                     |
 | **TechnicalWizard**     | Produces high-quality technical content, such as proposal sections and technical bullet points.   |
 | **TrendTracker**        | Monitors market trends, solicitations, and programs related to specific industries.               |
