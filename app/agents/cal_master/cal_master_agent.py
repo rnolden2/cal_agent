@@ -12,67 +12,84 @@ operations across agents.
 
 import asyncio
 import time
-import agents
 from typing import List
-from .json_schema import json_schema
+from agents import (
+    CustomerConnect,
+    DocMaster,
+    EditorAgent,
+    EngineerAgent,
+    ProMentor,
+    SalesAgent,
+    RivalWatcher,
+    TechWiz,
+    TrendTracker,
+)
 from .pydantic_schema import AgentTask
 from llm.manager import callModel
 from schema.master_schema import AgentModel
 from config.agent_list import AgentDescriptions, master_agent_description_prompt
+from agents.cal_master.json_schema import json_schema as json_schema_master
 
 
 class MasterAgent:
-    def create_prompt(prompt: str):
-        schema_to_use = json_schema
+    def create_prompt(prompt: str) -> AgentModel:
+        schema_to_use = json_schema_master
         agent_model = AgentModel(
             role=master_agent_description_prompt,
             content=prompt,
             agent_schema=schema_to_use,
-            agent=AgentDescriptions.MASTER_AGENT.value,
+            agent=AgentDescriptions.MASTER_AGENT.name,
         )
         return agent_model
 
-    async def agent_queue(tasks: List[AgentTask], provider: str):
+    async def agent_queue(tasks: List[AgentTask], provider: str, topic_id: str = None):
         start = time.time()
 
-        def process_task(task):
+        def process_task(task: AgentTask, topic_id: str = None):
             if task.agent_name == AgentDescriptions.CUSTOMER_CONNECT.name:
-                response = agents.CustomerConnect.create_prompt(
+                response: AgentModel = CustomerConnect.create_prompt(
                     task.prompt + " " + task.additional_context
                 )
             elif task.agent_name == AgentDescriptions.DOC_MASTER.name:
-                response = agents.DocMaster.create_prompt(
+                response = DocMaster.create_prompt(
                     task.prompt + " " + task.additional_context
                 )
             elif task.agent_name == AgentDescriptions.EDITOR_AGENT.name:
-                response = agents.EditorAgent.create_prompt(
+                response = EditorAgent.create_prompt(
                     task.prompt + " " + task.additional_context
                 )
             elif task.agent_name == AgentDescriptions.ENGINEER_AGENT.name:
-                response = agents.EngineerAgent.create_prompt(
+                response = EngineerAgent.create_prompt(
+                    task.prompt + " " + task.additional_context
+                )
+            elif task.agent_name == AgentDescriptions.PRO_MENTOR.name:
+                response = ProMentor.create_prompt(
                     task.prompt + " " + task.additional_context
                 )
             elif task.agent_name == AgentDescriptions.RIVAL_WATCHER.name:
-                response = agents.RivalWatcher.create_prompt(
+                response = RivalWatcher.create_prompt(
                     task.prompt + " " + task.additional_context
                 )
             elif task.agent_name == AgentDescriptions.SALES_AGENT.name:
-                response = agents.SalesAgent.create_prompt(
+                response = SalesAgent.create_prompt(
                     task.prompt + " " + task.additional_context
                 )
             elif task.agent_name == AgentDescriptions.TECH_WIZ.name:
-                response = agents.TechWiz.create_prompt(
+                response = TechWiz.create_prompt(
                     task.prompt + " " + task.additional_context
                 )
             elif task.agent_name == AgentDescriptions.TREND_TRACKER.name:
-                response = agents.TrendTracker.create_prompt(
+                response = TrendTracker.create_prompt(
                     task.prompt + " " + task.additional_context
                 )
             else:
                 response = None
+
+            if response and topic_id:
+                response.topic_id = topic_id
             return response  # Return the response
 
-        responses = [process_task(task) for task in tasks]
+        responses = [process_task(task, topic_id=topic_id) for task in tasks]
 
         # Now gather the calls to callModel
         agent_responses = await asyncio.gather(
@@ -85,13 +102,13 @@ class MasterAgent:
 
         # Use all agent responses to use when invoking the Professional Mentor Agent
         combined_response = "\n\n".join(agent_responses)
-        try:
-            pro_mentor_prompt = agents.ProMentor.create_prompt(combined_response)
-            await callModel(agent=pro_mentor_prompt, provider=provider)
-        except Exception as e:
-            print(f"Error calling ProMentor agent: {e}")
-
+        # try:
+        #     pro_mentor_prompt = ProMentor.create_prompt(combined_response)
+        #     await callModel(agent=pro_mentor_prompt, provider=provider)
+        # except Exception as e:
+        #     print(f"Error calling ProMentor agent: {e}")
 
         end = time.time()
         time_length = end - start
         print(f"It took {time_length} seconds")
+        return combined_response

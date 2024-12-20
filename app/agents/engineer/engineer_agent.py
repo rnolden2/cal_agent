@@ -10,10 +10,16 @@ and online courses to deepen understanding and ensure technical excellence.
 from schema.master_schema import AgentModel
 from .json_schema import json_schema
 from config.agent_list import AgentDescriptions
+from agents.engineer.json_schema import json_schema as json_schema_engineer
 
-class EngineerAgent():
-    def create_prompt(prompt:str):
-        schema_to_use = json_schema
-        agent_model = AgentModel(role=AgentDescriptions.ENGINEER_AGENT.value,content=prompt,agent_schema=schema_to_use, agent=AgentDescriptions.ENGINEER_AGENT.name)
+class EngineerAgent:
+    def create_prompt(prompt: str) -> AgentModel:
+        schema_to_use = json_schema_engineer
+        agent_model = AgentModel(
+            role=AgentDescriptions.ENGINEER_AGENT.value,
+            content=prompt,
+            agent_schema=schema_to_use,
+            agent=AgentDescriptions.ENGINEER_AGENT.name,
+        )
         return agent_model
-    
+

@@ -7,9 +7,14 @@ from schema.master_schema import AgentModel
 from .json_schema import json_schema
 from config.agent_list import AgentDescriptions
 
-class RivalWatcher():
-    def create_prompt(prompt:str):
-        schema_to_use = json_schema
-        agent_model = AgentModel(role=AgentDescriptions.RIVAL_WATCHER.value,content=prompt,agent_schema=schema_to_use, agent=AgentDescriptions.RIVAL_WATCHER.name)
+class RivalWatcher:
+    def create_prompt(prompt: str) -> AgentModel:
+        schema_to_use = json_schema_rival_watcher
+        agent_model = AgentModel(
+            role=AgentDescriptions.RIVAL_WATCHER.value,
+            content=prompt,
+            agent_schema=schema_to_use,
+            agent=AgentDescriptions.RIVAL_WATCHER.name,
+        )
         return agent_model
-    
+

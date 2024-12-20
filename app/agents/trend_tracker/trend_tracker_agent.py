@@ -8,10 +8,16 @@ inverters. Additionally, it tracks announcements of relevant programs and awards
 from schema.master_schema import AgentModel
 from .json_schema import json_schema
 from config.agent_list import AgentDescriptions
+from agents.trend_tracker.json_schema import json_schema as json_schema_trend_tracker
 
-class TrendTracker():
-    def create_prompt(prompt:str):
-        schema_to_use = json_schema.json_schema
-        agent_model = AgentModel(role=AgentDescriptions.TREND_TRACKER.value,content=prompt,agent_schema=schema_to_use, agent=AgentDescriptions.TREND_TRACKER.name)
+class TrendTracker:
+    def create_prompt(prompt: str) -> AgentModel:
+        schema_to_use = json_schema_trend_tracker
+        agent_model = AgentModel(
+            role=AgentDescriptions.TREND_TRACKER.value,
+            content=prompt,
+            agent_schema=schema_to_use,
+            agent=AgentDescriptions.TREND_TRACKER.name,
+        )
         return agent_model
-    
+   

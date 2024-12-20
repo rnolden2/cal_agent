@@ -9,12 +9,16 @@ focuses on making technical content both precise and engaging for its
 intended audience.
 """
 from schema.master_schema import AgentModel
-from .json_schema import json_schema
 from config.agent_list import AgentDescriptions
+from agents.editor.json_schema import json_schema as json_schema_editor
 
-class EditorAgent():
-    def create_prompt(prompt:str):
-        schema_to_use = json_schema
-        agent_model = AgentModel(role=AgentDescriptions.EDITOR_AGENT.value,content=prompt,agent_schema=schema_to_use, agent=AgentDescriptions.EDITOR_AGENT.name)
+class EditorAgent:
+    def create_prompt(prompt: str) -> AgentModel:
+        schema_to_use = json_schema_editor
+        agent_model = AgentModel(
+            role=AgentDescriptions.EDITOR_AGENT.value,
+            content=prompt,
+            agent_schema=schema_to_use,
+            agent=AgentDescriptions.EDITOR_AGENT.name,
+        )
         return agent_model
-    
