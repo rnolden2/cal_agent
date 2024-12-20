@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "cal-agent"
+version = "0.1.0"
+description = "The system is an intelligent orchestration platform designed to manage and streamline tasks across a team of specialized AI agents. Each agent is tailored to handle specific domains, such as customer communication, document retrieval, technical content creation, and market research. The system's core component, the Master Agent, dynamically routes requests to the appropriate agents based on the task's requirements, aggregates responses, and presents unified, actionable outputs to users. It ensures seamless interaction, adaptability, and efficiency, making it ideal for environments requiring cross-functional collaboration and intelligent task management."
+authors = ["randynolden <rnolden2@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11.3"
+requests = "2.31.0"
+openai = "1.54.4"
+vertexai = "1.71.1"
+fastapi = "^0.115.6"
+uvicorn = "^0.34.0"
+jinja2 = "^3.1.4"
+orjson = "^3.10.12"
+google-cloud-secret-manager = "^2.22.0"
+google-cloud-firestore = "^2.19.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

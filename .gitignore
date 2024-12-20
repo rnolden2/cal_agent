@@ -9,3 +9,7 @@ app/config/config.py
 __pycache__
 
 misc/
+
+poetry.lock
+.venv
+venv/
