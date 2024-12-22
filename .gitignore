@@ -1,15 +1,38 @@
+# IDE and Editor Files
+.idea/
+.vscode/
+
+# Python Build Artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual Environments
+.venv/
+venv/
+*.venv
+
+# Poetry Files
+poetry.lock
+
+# Test/Cache Files
+.pytest_cache/
+
+# Documentation/Readmes (if not meant for version control)
+.readmes/
+
+# Application-Specific Files
 app/.env
 app/config/api-project.json
 app/config/config.py
-.idea
-.pytest_cache
-.readmes
-.vscode
-.task-management-api.yaml
-__pycache__
+.task-management-api.yaml # Consider moving this to app/config/
 
+# Misc Files/Directories
 misc/
 
-poetry.lock
-.venv
-venv/
+# Git-related Files (usually automatically ignored)
+*.git
+
+
+
