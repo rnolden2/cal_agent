@@ -7,7 +7,7 @@ class AgentModel(BaseModel):
     content: str
     agent_schema: Union[Dict, Any]
     additional_context: Optional[str] = None
-    topic_id: Optional[str] = None
+    topic_id: str = Field(..., description="Unique identifier for the agent call.")
 
 
 class AgentCallModel(BaseModel):

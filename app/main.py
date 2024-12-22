@@ -5,6 +5,8 @@ CAL - Collaborative AI Layer
 import asyncio
 import os
 import orjson
+
+
 from .agents import (
     CustomerConnect,
     DocMaster,
@@ -19,6 +21,7 @@ from .agents import (
 from .agents.cal_master.cal_master_agent import MasterAgent
 from .schema.master_schema import AgentCallModel, AgentModel
 from .schema.master_schema import AgentTask
+from .storage.firestore_db import set_topic_id
 from .llm.manager import callModel
 import uvicorn
 from fastapi import FastAPI, Request
@@ -44,7 +47,7 @@ def pingpong():
 async def agentMaster(request: AgentCallModel):
     # Retrieve Master Agent
     agent_data: AgentModel = MasterAgent.create_prompt(request.response)
-    agent_data.topic_id = request.topic_id
+    agent_data.topic_id = set_topic_id(request.topic_id)
     master_agent_call = await callModel(agent=agent_data, provider=request.provider)
     response_dict = orjson.loads(master_agent_call)
     agent_data = response_dict["response"]["tasks"]
@@ -65,7 +68,7 @@ async def agentCustomerConnect(request: AgentCallModel):
         prompt += " " + request.additional_context
 
     agent_data: AgentModel = CustomerConnect.create_prompt(prompt)
-    agent_data.topic_id = request.topic_id
+    agent_data.topic_id = set_topic_id(request.topic_id)
     agent_call = await callModel(agent=agent_data, provider=request.provider)
     return agent_call
 
@@ -78,7 +81,7 @@ async def agentDocMaster(request: AgentCallModel):
         prompt += " " + request.additional_context
 
     agent_data: AgentModel = DocMaster.create_prompt(prompt)
-    agent_data.topic_id = request.topic_id
+    agent_data.topic_id = set_topic_id(request.topic_id)
     agent_call = await callModel(agent=agent_data, provider=request.provider)
     return agent_call
 
@@ -91,7 +94,7 @@ async def agentEditor(request: AgentCallModel):
         prompt += " " + request.additional_context
 
     agent_data: AgentModel = EditorAgent.create_prompt(prompt)
-    agent_data.topic_id = request.topic_id
+    agent_data.topic_id = set_topic_id(request.topic_id)
     agent_call = await callModel(agent=agent_data, provider=request.provider)
     return agent_call
 
@@ -104,7 +107,7 @@ async def agentEngineer(request: AgentCallModel):
         prompt += " " + request.additional_context
 
     agent_data: AgentModel = EngineerAgent.create_prompt(prompt)
-    agent_data.topic_id = request.topic_id
+    agent_data.topic_id = set_topic_id(request.topic_id)
     agent_call = await callModel(agent=agent_data, provider=request.provider)
     return agent_call
 
@@ -117,7 +120,8 @@ async def agentProMentor(request: AgentCallModel):
         prompt += " " + request.additional_context
 
     agent_data: AgentModel = ProMentor.create_prompt(prompt)
-    agent_data.topic_id = request.topic_id
+    agent_data.topic_id = set_topic_id(request.topic_id)
+    
     agent_call = await callModel(agent=agent_data, provider=request.provider)
     return agent_call
 
@@ -130,7 +134,7 @@ async def agentRivalWatcher(request: AgentCallModel):
         prompt += " " + request.additional_context
 
     agent_data: AgentModel = RivalWatcher.create_prompt(prompt)
-    agent_data.topic_id = request.topic_id
+    agent_data.topic_id = set_topic_id(request.topic_id)
     agent_call = await callModel(agent=agent_data, provider=request.provider)
     return agent_call
 
@@ -156,7 +160,7 @@ async def agentTechWiz(request: AgentCallModel):
         prompt += " " + request.additional_context
 
     agent_data: AgentModel = TechWiz.create_prompt(prompt)
-    agent_data.topic_id = request.topic_id
+    agent_data.topic_id = set_topic_id(request.topic_id)
     agent_call = await callModel(agent=agent_data, provider=request.provider)
     return agent_call
 
@@ -169,7 +173,7 @@ async def agentTrendTracker(request: AgentCallModel):
         prompt += " " + request.additional_context
 
     agent_data: AgentModel = TrendTracker.create_prompt(prompt)
-    agent_data.topic_id = request.topic_id
+    agent_data.topic_id = set_topic_id(request.topic_id)
     agent_call = await callModel(agent=agent_data, provider=request.provider)
     return agent_call
 
