@@ -1,4 +1,37 @@
+# IDE Docker and Editor Files
+.idea/
+.vscode/
 .dockerignore
-.vscode
-.idea
-.readmes
+
+# Python Build Artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual Environments
+.venv/
+venv/
+*.venv
+
+# Poetry Files
+
+
+# Test/Cache Files
+.pytest_cache/
+
+# Documentation/Readmes (if not meant for version control)
+.readmes/
+
+# Application-Specific Files
+app/.env
+
+
+# Misc Files/Directories
+misc/
+
+# Git-related Files (usually automatically ignored)
+*.git
+
+
+

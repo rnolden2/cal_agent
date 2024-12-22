@@ -1,17 +1,43 @@
-# Python image to use.
-FROM python:3.12-alpine
+FROM python:3.11-slim AS builder
 
-# Set the working directory to /app
+# Install Poetry
+RUN pip install --no-cache-dir poetry==1.3.2
+
+# Set environment variables for Poetry
+ENV POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_IN_PROJECT=1 \
+    POETRY_VIRTUALENVS_CREATE=1 \
+    POETRY_CACHE_DIR=/tmp/poetry_cache
+
 WORKDIR /app
 
-# copy the requirements file used for dependencies
-COPY requirements.txt .
+# Copy dependency files
+COPY pyproject.toml poetry.lock ./
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --trusted-host pypi.python.org -r requirements.txt
+# Install dependencies using Poetry
+RUN --mount=type=cache,target=/tmp/poetry_cache \
+    poetry install --only main --no-root
 
-# Copy the rest of the working directory contents into the container at /app
-COPY . .
+# Final runtime stage
+FROM python:3.11-slim AS runtime
 
-# Run app.py when the container launches
-ENTRYPOINT ["python", "app/main_complete.py"]
+# Set up virtual environment
+ENV VIRTUAL_ENV=/app/.venv \
+    PATH="/app/.venv/bin:$PATH"
+
+# Add a non-root user for security
+RUN addgroup --system appgroup && adduser --system appuser --ingroup appgroup
+
+# Copy virtual environment from builder stage
+COPY --from=builder /app/.venv /app/.venv
+
+# Copy application code
+WORKDIR /app
+COPY app ./app
+
+# Set permissions and switch to non-root user
+RUN chown -R appuser:appgroup /app
+USER appuser
+RUN ls
+# Default command to run your main.py file
+CMD ["python", "-m", "app.main"]
