@@ -6,7 +6,7 @@ authors = ["randynolden <rnolden2@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11.3"
+python = "^3.11"
 requests = "2.31.0"
 openai = "1.54.4"
 vertexai = "1.71.1"
