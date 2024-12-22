@@ -8,9 +8,9 @@ changes and additional recommendations for improvement. The Editor Agent
 focuses on making technical content both precise and engaging for its 
 intended audience.
 """
-from schema.master_schema import AgentModel
-from config.agent_list import AgentDescriptions
-from agents.editor.json_schema import json_schema as json_schema_editor
+from ...schema.master_schema import AgentModel
+from ...config.agent_list import AgentDescriptions
+from .json_schema import json_schema as json_schema_editor
 
 class EditorAgent:
     def create_prompt(prompt: str) -> AgentModel:

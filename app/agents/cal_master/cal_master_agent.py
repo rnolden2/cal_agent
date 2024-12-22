@@ -13,7 +13,7 @@ operations across agents.
 import asyncio
 import time
 from typing import List
-from agents import (
+from ...agents import (
     CustomerConnect,
     DocMaster,
     EditorAgent,
@@ -25,10 +25,10 @@ from agents import (
     TrendTracker,
 )
 from .pydantic_schema import AgentTask
-from llm.manager import callModel
-from schema.master_schema import AgentModel
-from config.agent_list import AgentDescriptions, master_agent_description_prompt
-from agents.cal_master.json_schema import json_schema as json_schema_master
+from ...llm.manager import callModel
+from ...schema.master_schema import AgentModel
+from ...config.agent_list import AgentDescriptions, master_agent_description_prompt
+from .json_schema import json_schema as json_schema_master
 
 
 class MasterAgent:

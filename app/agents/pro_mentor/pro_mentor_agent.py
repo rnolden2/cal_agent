@@ -4,10 +4,9 @@ increase value, and improve efficiency. It suggests optimal timing for tasks,
 recommends additional initiatives to exceed expectations, and incorporates past 
 feedback to refine future guidance.
 """
-from schema.master_schema import AgentModel
-from .json_schema import json_schema
-from config.agent_list import AgentDescriptions
-from agents.pro_mentor.json_schema import json_schema as json_schema_pro_mentor
+from ...schema.master_schema import AgentModel
+from ...config.agent_list import AgentDescriptions
+from .json_schema import json_schema as json_schema_pro_mentor
 
 class ProMentor:
     def create_prompt(prompt: str) -> AgentModel:

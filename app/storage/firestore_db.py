@@ -2,7 +2,7 @@ from fastapi import logger
 from google.cloud import firestore
 import orjson
 
-from main_complete import DatabaseModel
+from ..schema.master_schema import DatabaseModel
 
 
 # Initialize Firestore client

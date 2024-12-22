@@ -17,19 +17,19 @@ from vertexai.generative_models import GenerativeModel, GenerationConfig
 from typing import List
 from google.cloud import secretmanager
 from google.cloud import firestore
-from config.agent_list import AgentDescriptions, master_agent_description_prompt
-from agents.cal_master.json_schema import json_schema as json_schema_master
-from agents.customer_connect.json_schema import (
+from app.config.agent_list import AgentDescriptions, master_agent_description_prompt
+from app.agents.cal_master.json_schema import json_schema as json_schema_master
+from app.agents.customer_connect.json_schema import (
     json_schema as json_schema_customer_connect,
 )
-from agents.doc_master.json_schema import json_schema as json_schema_doc_master
-from agents.editor.json_schema import json_schema as json_schema_editor
-from agents.engineer.json_schema import json_schema as json_schema_engineer
-from agents.pro_mentor.json_schema import json_schema as json_schema_pro_mentor
-from agents.rival_watcher.json_schema import json_schema as json_schema_rival_watcher
-from agents.sales_agent.json_schema import json_schema as json_schema_sales_agent
-from agents.tech_wiz.json_schema import json_schema as json_schema_tech_wiz
-from agents.trend_tracker.json_schema import json_schema as json_schema_trend_tracker
+from app.agents.doc_master.json_schema import json_schema as json_schema_doc_master
+from app.agents.editor.json_schema import json_schema as json_schema_editor
+from app.agents.engineer.json_schema import json_schema as json_schema_engineer
+from app.agents.pro_mentor.json_schema import json_schema as json_schema_pro_mentor
+from app.agents.rival_watcher.json_schema import json_schema as json_schema_rival_watcher
+from app.agents.sales_agent.json_schema import json_schema as json_schema_sales_agent
+from app.agents.tech_wiz.json_schema import json_schema as json_schema_tech_wiz
+from app.agents.trend_tracker.json_schema import json_schema as json_schema_trend_tracker
 
 
 app = FastAPI()

@@ -7,10 +7,9 @@ principles, offering recommendations to improve technical knowledge and
 problem-solving. It suggests resources such as textbooks, research papers, 
 and online courses to deepen understanding and ensure technical excellence.
 """
-from schema.master_schema import AgentModel
-from .json_schema import json_schema
-from config.agent_list import AgentDescriptions
-from agents.engineer.json_schema import json_schema as json_schema_engineer
+from ...schema.master_schema import AgentModel
+from ...config.agent_list import AgentDescriptions
+from .json_schema import json_schema as json_schema_engineer
 
 class EngineerAgent:
     def create_prompt(prompt: str) -> AgentModel:

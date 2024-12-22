@@ -2,10 +2,9 @@ import asyncio
 
 from fastapi import logger
 
-from main_complete import DatabaseModel
-from storage.firestore_db import store_agent_response
-from schema.master_schema import AgentModel
-from config.config import GoogleClient, OpenAIClient
+from ..storage.firestore_db import store_agent_response
+from ..schema.master_schema import AgentModel, DatabaseModel
+from ..config.config import GoogleClient, OpenAIClient
 
 async def callModel(provider: int, agent: AgentModel):
     try:

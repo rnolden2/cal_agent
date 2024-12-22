@@ -5,7 +5,7 @@ CAL - Collaborative AI Layer
 import asyncio
 import os
 import orjson
-from agents import (
+from .agents import (
     CustomerConnect,
     DocMaster,
     EditorAgent,
@@ -16,10 +16,10 @@ from agents import (
     TechWiz,
     TrendTracker,
 )
-from agents.cal_master.cal_master_agent import MasterAgent
-from schema.master_schema import AgentCallModel, AgentModel
-from schema.master_schema import AgentTask
-from llm.manager import callModel
+from .agents.cal_master.cal_master_agent import MasterAgent
+from .schema.master_schema import AgentCallModel, AgentModel
+from .schema.master_schema import AgentTask
+from .llm.manager import callModel
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
@@ -40,7 +40,7 @@ def pingpong():
     return "pong"
 
 
-@app.get("/master")
+@app.post("/master")
 async def agentMaster(request: AgentCallModel):
     # Retrieve Master Agent
     agent_data: AgentModel = MasterAgent.create_prompt(request.response)
@@ -57,7 +57,7 @@ async def agentMaster(request: AgentCallModel):
     return master_agent_call
 
 
-@app.get("/customerconnect")
+@app.post("/customerconnect")
 async def agentCustomerConnect(request: AgentCallModel):
     # Retrieve Customer Connect Agent
     prompt = request.response
@@ -70,7 +70,7 @@ async def agentCustomerConnect(request: AgentCallModel):
     return agent_call
 
 
-@app.get("/docmaster")
+@app.post("/docmaster")
 async def agentDocMaster(request: AgentCallModel):
     # Retrieve Trend Tracker Agent
     prompt = request.response
@@ -83,7 +83,7 @@ async def agentDocMaster(request: AgentCallModel):
     return agent_call
 
 
-@app.get("/editor")
+@app.post("/editor")
 async def agentEditor(request: AgentCallModel):
     # Retrieve Editor Agent
     prompt = request.response
@@ -96,7 +96,7 @@ async def agentEditor(request: AgentCallModel):
     return agent_call
 
 
-@app.get("/engineer")
+@app.post("/engineer")
 async def agentEngineer(request: AgentCallModel):
     # Retrieve Engineer Agent
     prompt = request.response
@@ -109,7 +109,7 @@ async def agentEngineer(request: AgentCallModel):
     return agent_call
 
 
-@app.get("/promentor")
+@app.post("/promentor")
 async def agentProMentor(request: AgentCallModel):
     # Retrieve Pro Mentor Agent
     prompt = request.response
@@ -122,7 +122,7 @@ async def agentProMentor(request: AgentCallModel):
     return agent_call
 
 
-@app.get("/rivalwatcher")
+@app.post("/rivalwatcher")
 async def agentRivalWatcher(request: AgentCallModel):
     # Retrieve Rival Watcher Agent
     prompt = request.response
@@ -135,7 +135,7 @@ async def agentRivalWatcher(request: AgentCallModel):
     return agent_call
 
 
-@app.get("/sales")
+@app.post("/sales")
 async def agentSales(request: AgentCallModel):
     # Retrieve Sales Agent
     prompt = request.response
@@ -148,7 +148,7 @@ async def agentSales(request: AgentCallModel):
     return agent_call
 
 
-@app.get("/techwiz")
+@app.post("/techwiz")
 async def agentTechWiz(request: AgentCallModel):
     # Retrieve Tech Wiz Agent
     prompt = request.response
@@ -161,7 +161,7 @@ async def agentTechWiz(request: AgentCallModel):
     return agent_call
 
 
-@app.get("/trendtracker")
+@app.post("/trendtracker")
 async def agentTrendTracker(request: AgentCallModel):
     # Retrieve Trend Tracker Agent
     prompt = request.response
