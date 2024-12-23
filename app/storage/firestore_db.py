@@ -1,5 +1,5 @@
 from typing import Union
-from fastapi import logger
+import logging
 from google.cloud import firestore
 import orjson
 
@@ -8,6 +8,7 @@ from ..schema.master_schema import DatabaseModel
 
 # Initialize Firestore client
 db = firestore.Client()
+logger = logging.getLogger(__name__)
 
 def store_agent_response(response: DatabaseModel) -> str:
     """Store new response in Firestore database"""
@@ -52,6 +53,6 @@ def create_topic_id():
         logger.error(f"Error creating Firestore document ID: {e}", exc_info=True)
         raise RuntimeError("Failed to create document ID") from e
 
-def set_topic_id(request: Union[str]) -> str:
+def set_topic_id(topic_id: Union[str]) -> str:
     """Sets the topic_id if it's not provided in the request."""
-    return request.topic_id if request.topic_id else create_topic_id()
+    return topic_id if topic_id else create_topic_id()

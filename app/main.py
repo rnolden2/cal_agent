@@ -5,7 +5,7 @@ CAL - Collaborative AI Layer
 import asyncio
 import os
 import orjson
-
+import logging
 
 from .agents import (
     CustomerConnect,
@@ -32,6 +32,7 @@ from typing import List
 
 app = FastAPI()
 
+logger = logging.getLogger(__name__)
 
 @app.get("/")
 def hello():
@@ -45,19 +46,26 @@ def pingpong():
 
 @app.post("/master")
 async def agentMaster(request: AgentCallModel):
-    # Retrieve Master Agent
-    agent_data: AgentModel = MasterAgent.create_prompt(request.response)
-    agent_data.topic_id = set_topic_id(request.topic_id)
-    master_agent_call = await callModel(agent=agent_data, provider=request.provider)
-    response_dict = orjson.loads(master_agent_call)
-    agent_data = response_dict["response"]["tasks"]
-    tasks: List[AgentTask] = [AgentTask(**task) for task in agent_data]
-    asyncio.create_task(
-        MasterAgent.agent_queue(
-            tasks=tasks, provider=request.provider, topic_id=request.topic_id
+    try:
+        # Retrieve Master Agent
+        agent_data: AgentModel = MasterAgent.create_prompt(request.response)
+        agent_data.topic_id = set_topic_id(request.topic_id)
+        master_agent_call = await callModel(agent=agent_data, provider=request.provider)
+
+        response_dict = orjson.loads(master_agent_call)
+        agent_data = response_dict["response"]["tasks"]
+        tasks: List[AgentTask] = [AgentTask(**task) for task in agent_data]
+        asyncio.create_task(
+            MasterAgent.agent_queue(
+                tasks=tasks, provider=request.provider, topic_id=request.topic_id
+            )
         )
-    )
-    return master_agent_call
+        return master_agent_call
+    except Exception as e:
+        logger.error(f"Error in agentMaster endpoint: {e}", exc_info=True)
+        return {"error": str(e)}
+
+
 
 
 @app.post("/customerconnect")

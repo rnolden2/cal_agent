@@ -13,7 +13,6 @@ from google.cloud import secretmanager
 # credentials = Credentials.from_service_account_file(credential_path)
 # os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credential_path
 
-
 def get_secret(secret):
     client = secretmanager.SecretManagerServiceClient()
     project_id = "api-project-371618"
@@ -31,14 +30,10 @@ def get_secret(secret):
     # ...
     return secret_value
 
-
 service_account = get_secret("cal-service-account")
 vertexai.init(
-    project="api-project-371618",
-    location="us-central1",
-    service_account=service_account,
+    project="api-project-371618", location="us-central1", service_account=service_account
 )
-
 
 class OpenAIClient:
     def __init__(self):
@@ -69,7 +64,6 @@ class OpenAIClient:
         )
         message = completion.choices[0].message
         print(f"Response: {message.content}")
-
         return message.content
 
     def predict_pydantic_response(
@@ -103,7 +97,7 @@ class GoogleClient:
                 response_mime_type="application/json",
                 response_schema=agent.agent_schema,
             ),
-            tools=[""],
+            tools=[""]
         )
         print(f"Response: {completion.text}")
         return completion.text
