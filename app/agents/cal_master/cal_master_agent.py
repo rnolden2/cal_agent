@@ -42,10 +42,10 @@ class MasterAgent:
         )
         return agent_model
 
-    async def agent_queue(tasks: List[AgentTask], provider: str, topic_id: str = None):
+    async def agent_queue(tasks: List[AgentTask], provider: str, topic_id: str):
         start = time.time()
 
-        def process_task(task: AgentTask, topic_id: str = None):
+        def process_task(task: AgentTask, topic_id: str):
             if task.agent_name == AgentDescriptions.CUSTOMER_CONNECT.name:
                 response: AgentModel = CustomerConnect.create_prompt(
                     task.prompt + " " + task.additional_context
@@ -101,14 +101,9 @@ class MasterAgent:
         )
 
         # Use all agent responses to use when invoking the Professional Mentor Agent
-        combined_response = "\n\n".join(agent_responses)
-        # try:
-        #     pro_mentor_prompt = ProMentor.create_prompt(combined_response)
-        #     await callModel(agent=pro_mentor_prompt, provider=provider)
-        # except Exception as e:
-        #     print(f"Error calling ProMentor agent: {e}")
-
+        # combined_response = "\n\n".join(agent_responses)
+  
         end = time.time()
         time_length = end - start
         print(f"It took {time_length} seconds")
-        return combined_response
+        return "Completed"
