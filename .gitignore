@@ -13,9 +13,6 @@ __pycache__/
 venv/
 *.venv
 
-# Poetry Files
-poetry.lock
-
 # Test/Cache Files
 .pytest_cache/
 
@@ -25,8 +22,6 @@ poetry.lock
 # Application-Specific Files
 app/.env
 app/config/api-project.json
-app/config/config.py
-.task-management-api.yaml # Consider moving this to app/config/
 
 # Misc Files/Directories
 misc/
