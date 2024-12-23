@@ -97,7 +97,6 @@ class GoogleClient:
                 response_mime_type="application/json",
                 response_schema=agent.agent_schema,
             ),
-            tools=[""]
         )
         print(f"Response: {completion.text}")
         return completion.text

@@ -51,7 +51,6 @@ async def agentMaster(request: AgentCallModel):
         agent_data: AgentModel = MasterAgent.create_prompt(request.response)
         agent_data.topic_id = set_topic_id(request.topic_id)
         master_agent_call = await callModel(agent=agent_data, provider=request.provider)
-
         response_dict = orjson.loads(master_agent_call)
         agent_data = response_dict["response"]["tasks"]
         tasks: List[AgentTask] = [AgentTask(**task) for task in agent_data]
