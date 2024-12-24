@@ -19,7 +19,6 @@ json_schema = {
                 "bullet_points": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "maxItems": 5,
                     "description": "Array of bullet points, limited to a maximum of 5 items.",
                 },
                 "paragraph": {

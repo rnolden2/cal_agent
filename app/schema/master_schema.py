@@ -1,3 +1,4 @@
+from enum import Enum
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional, Union, Any
 
@@ -10,8 +11,14 @@ class AgentModel(BaseModel):
     topic_id: Optional[str] = None
 
 
+class Provider(str, Enum):  # Enum for provider
+    OPENAI = "openai"
+    GOOGLE = "google"
+
+
 class AgentCallModel(BaseModel):
-    provider: int
+    provider: Provider  # Use the Provider enum
+    model: int # Add models field
     response: str = Field(..., min_length=1)
     additional_context: Optional[str] = None
     topic_id: Optional[str] = None

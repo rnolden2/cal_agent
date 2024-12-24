@@ -30,10 +30,8 @@ json_schema = {
                                     "type": "array",
                                     "items": {
                                         "type": "string",
-                                        "description": "A specific step to improve personally.",
+                                        "description": "Array of up to 10 actionable steps to improve personally.",
                                     },
-                                    "maxItems": 10,
-                                    "description": "Array of up to 10 actionable steps for personal improvement.",
                                 },
                             },
                             "required": ["explanation", "actions"],
@@ -50,10 +48,8 @@ json_schema = {
                                     "type": "array",
                                     "items": {
                                         "type": "string",
-                                        "description": "A specific step to improve professionally.",
+                                        "description": "Array of up to 10 actionable steps to improve professionally.",
                                     },
-                                    "maxItems": 10,
-                                    "description": "Array of up to 10 actionable steps for professional improvement.",
                                 },
                             },
                             "required": ["explanation", "actions"],

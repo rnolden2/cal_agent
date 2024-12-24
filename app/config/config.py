@@ -2,16 +2,11 @@ import os
 from typing import Union
 from pydantic import BaseModel
 from openai import OpenAI
-import vertexai
-from google.oauth2.service_account import Credentials
-from vertexai.generative_models import GenerativeModel, GenerationConfig
+import google.generativeai as genai
 from ..models.model_list import openai_models, google_models
 from ..schema.master_schema import AgentModel
 from google.cloud import secretmanager
 
-# credential_path = "app/config/api-project.json"
-# credentials = Credentials.from_service_account_file(credential_path)
-# os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credential_path
 
 def get_secret(secret):
     client = secretmanager.SecretManagerServiceClient()
@@ -30,41 +25,51 @@ def get_secret(secret):
     # ...
     return secret_value
 
-service_account = get_secret("cal-service-account")
-vertexai.init(
-    project="api-project-371618", location="us-central1", service_account=service_account
-)
+genai_api_key = get_secret("gemini_api")
+genai.configure(api_key=genai_api_key)
+
 
 class OpenAIClient:
     def __init__(self):
         api_key = get_secret("openai_cal_key")
         self.client = OpenAI(api_key=api_key)
+        self.model = None  # Initialize model to None
 
-    def load_model(self, model_name: Union[str | None]):
-        if model_name is None:
-            return openai_models[1]
-        else:
-            return openai_models[0]
+    def load_model(self, model: int):
+        """Loads the specified OpenAI model."""
+        try:
+            self.model = openai_models[model]  # Set the model attribute
+            return self.model  # Return the loaded model name for informational purposes
 
-    def predict(self, agent: AgentModel):
-        model = self.load_model(model_name=None)
-        completion = self.client.beta.chat.completions.parse(
-            model=model,
-            messages=[
-                {"role": "system", "content": agent.role},
-                {"role": "user", "content": agent.content},
-            ],
-            response_format={
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "my_response",
-                    "schema": agent.agent_schema,
+        except IndexError:
+            raise ValueError(
+                f"Invalid model index: {model}. Must be within the range of available OpenAI models."
+            )
+        except Exception as e:  # Handle other potential errors
+            raise RuntimeError(f"Failed to load OpenAI model: {e}")
+
+    def predict(self, agent: AgentModel, model: int):
+        try:
+            self.load_model(model)
+            completion = self.client.beta.chat.completions.parse(
+                model=self.model,  # Use the loaded model
+                messages=[
+                    {"role": "system", "content": agent.role},
+                    {"role": "user", "content": agent.content},
+                ],
+                response_format={
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "my_response",
+                        "schema": agent.agent_schema,
+                    },
                 },
-            },
-        )
-        message = completion.choices[0].message
-        print(f"Response: {message.content}")
-        return message.content
+            )
+            message = completion.choices[0].message
+            print(f"Response: {message.content}")
+            return message.content
+        except Exception as e:
+            raise RuntimeError(f"OpenAI prediction failed: {e}")
 
     def predict_pydantic_response(
         self, agent: AgentModel, response_format: BaseModel
@@ -88,15 +93,34 @@ class OpenAIClient:
 
 class GoogleClient:
     def __init__(self):
-        self.client = GenerativeModel(google_models[0])
+        # Initialize
+        self.client = None
 
-    def predict(self, agent: AgentModel):
-        completion = self.client.generate_content(
-            agent.role + " : " + agent.content,
-            generation_config=GenerationConfig(
-                response_mime_type="application/json",
-                response_schema=agent.agent_schema,
-            ),
-        )
-        print(f"Response: {completion.text}")
-        return completion.text
+    def load_model(self, model: int):
+        """Loads the specified Gemini model."""
+        try:
+            model_name = google_models[model]
+            self.client = genai.GenerativeModel(model_name)  # Initialize the model
+            return model_name
+
+        except IndexError:
+            raise ValueError(
+                f"Invalid model index: {model}. Must be within the range of available Google models."
+            )
+        except Exception as e:  # Catch other potential errors during model loading.
+            raise RuntimeError(f"Failed to load Google model: {e}")
+
+    def predict(self, agent: AgentModel, model: int):
+        try:
+            self.load_model(model)
+            completion = self.client.generate_content(
+                agent.role + " : " + agent.content,
+                generation_config=genai.GenerationConfig(
+                    response_mime_type="application/json",
+                    response_schema=agent.agent_schema,
+                ),
+            )
+            print(f"Response: {completion.text}")
+            return completion.text
+        except Exception as e:
+            raise RuntimeError(f"Google prediction failed: {e}")

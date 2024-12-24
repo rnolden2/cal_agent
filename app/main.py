@@ -50,13 +50,13 @@ async def agentMaster(request: AgentCallModel):
         # Retrieve Master Agent
         agent_data: AgentModel = MasterAgent.create_prompt(request.response)
         agent_data.topic_id = set_topic_id(request.topic_id)
-        master_agent_call = await callModel(agent=agent_data, provider=request.provider)
+        master_agent_call = await callModel(agent=agent_data, provider=request.provider, model=request.model)
         response_dict = orjson.loads(master_agent_call)
         agent_data = response_dict["response"]["tasks"]
         tasks: List[AgentTask] = [AgentTask(**task) for task in agent_data]
         asyncio.create_task(
             MasterAgent.agent_queue(
-                tasks=tasks, provider=request.provider, topic_id=request.topic_id
+                tasks=tasks, provider=request.provider, topic_id=request.topic_id, model=request.model
             )
         )
         return master_agent_call
@@ -76,7 +76,7 @@ async def agentCustomerConnect(request: AgentCallModel):
 
     agent_data: AgentModel = CustomerConnect.create_prompt(prompt)
     agent_data.topic_id = set_topic_id(request.topic_id)
-    agent_call = await callModel(agent=agent_data, provider=request.provider)
+    agent_call = await callModel(agent=agent_data, provider=request.provider, model=request.model)
     return agent_call
 
 
@@ -89,7 +89,7 @@ async def agentDocMaster(request: AgentCallModel):
 
     agent_data: AgentModel = DocMaster.create_prompt(prompt)
     agent_data.topic_id = set_topic_id(request.topic_id)
-    agent_call = await callModel(agent=agent_data, provider=request.provider)
+    agent_call = await callModel(agent=agent_data, provider=request.provider, model=request.model)
     return agent_call
 
 
@@ -102,7 +102,7 @@ async def agentEditor(request: AgentCallModel):
 
     agent_data: AgentModel = EditorAgent.create_prompt(prompt)
     agent_data.topic_id = set_topic_id(request.topic_id)
-    agent_call = await callModel(agent=agent_data, provider=request.provider)
+    agent_call = await callModel(agent=agent_data, provider=request.provider, model=request.model)
     return agent_call
 
 
@@ -115,7 +115,7 @@ async def agentEngineer(request: AgentCallModel):
 
     agent_data: AgentModel = EngineerAgent.create_prompt(prompt)
     agent_data.topic_id = set_topic_id(request.topic_id)
-    agent_call = await callModel(agent=agent_data, provider=request.provider)
+    agent_call = await callModel(agent=agent_data, provider=request.provider, model=request.model)
     return agent_call
 
 
@@ -129,7 +129,7 @@ async def agentProMentor(request: AgentCallModel):
     agent_data: AgentModel = ProMentor.create_prompt(prompt)
     agent_data.topic_id = set_topic_id(request.topic_id)
     
-    agent_call = await callModel(agent=agent_data, provider=request.provider)
+    agent_call = await callModel(agent=agent_data, provider=request.provider, model=request.model)
     return agent_call
 
 
@@ -142,7 +142,7 @@ async def agentRivalWatcher(request: AgentCallModel):
 
     agent_data: AgentModel = RivalWatcher.create_prompt(prompt)
     agent_data.topic_id = set_topic_id(request.topic_id)
-    agent_call = await callModel(agent=agent_data, provider=request.provider)
+    agent_call = await callModel(agent=agent_data, provider=request.provider, model=request.model)
     return agent_call
 
 
@@ -155,7 +155,7 @@ async def agentSales(request: AgentCallModel):
 
     agent_data: AgentModel = SalesAgent.create_prompt(prompt)
     agent_data.topic_id = request.topic_id
-    agent_call = await callModel(agent=agent_data, provider=request.provider)
+    agent_call = await callModel(agent=agent_data, provider=request.provider, model=request.model)
     return agent_call
 
 
@@ -168,7 +168,7 @@ async def agentTechWiz(request: AgentCallModel):
 
     agent_data: AgentModel = TechWiz.create_prompt(prompt)
     agent_data.topic_id = set_topic_id(request.topic_id)
-    agent_call = await callModel(agent=agent_data, provider=request.provider)
+    agent_call = await callModel(agent=agent_data, provider=request.provider, model=request.model)
     return agent_call
 
 
@@ -181,7 +181,7 @@ async def agentTrendTracker(request: AgentCallModel):
 
     agent_data: AgentModel = TrendTracker.create_prompt(prompt)
     agent_data.topic_id = set_topic_id(request.topic_id)
-    agent_call = await callModel(agent=agent_data, provider=request.provider)
+    agent_call = await callModel(agent=agent_data, provider=request.provider, model=request.model)
     return agent_call
 
 
