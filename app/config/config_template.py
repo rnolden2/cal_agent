@@ -1,32 +1,82 @@
+import os
+import orjson
+from typing import Union
+from pydantic import BaseModel
 from openai import OpenAI
-import vertexai
-from google.oauth2.service_account import Credentials
-from vertexai.generative_models import GenerativeModel, GenerationConfig
-from models.model_list import openai_models, google_models
-from schema.openai_schema import ChatCompletion, Message
-from schema.master_schema import AgentModel
+import google.generativeai as genai
+from ..models.model_list import openai_models, google_models, perplexity_models
+from ..agent_schema.agent_master_schema import AgentModel
+from google.cloud import secretmanager
+import httpx
 
 
-credentials = Credentials.from_service_account_file(
-    "app/config/api-project.json"
-)
-vertexai.init(
-    project="", location="us-central1", credentials=credentials
-)
+def get_secret(secret):
+    client = secretmanager.SecretManagerServiceClient()
+    project_id = ""
+    secret_id = secret
+    version_id = "latest"
+
+    # Access the secret version
+    name = f"projects/{project_id}/secrets/{secret_id}/versions/{version_id}"
+    response = client.access_secret_version(request={"name": name})
+
+    # Extract the secret value
+    secret_value = response.payload.data.decode("UTF-8")
+
+    # Use the secret value in your app
+    # ...
+    return secret_value
+
+
+genai_api_key = get_secret("")
+genai.configure(api_key=genai_api_key)
 
 
 class OpenAIClient:
     def __init__(self):
-        api_key = ""
+        api_key = get_secret("")
         self.client = OpenAI(api_key=api_key)
+        self.model = None  # Initialize model to None
 
-    def load_model(self, model_name: str | None):
-        if model_name == None:
-            return openai_models[1]
-        else:
-            return openai_models[0]
+    def load_model(self, model: int):
+        """Loads the specified OpenAI model."""
+        try:
+            self.model = openai_models[model]  # Set the model attribute
+            return self.model  # Return the loaded model name for informational purposes
 
-    def predict(self, agent: AgentModel):
+        except IndexError:
+            raise ValueError(
+                f"Invalid model index: {model}. Must be within the range of available OpenAI models."
+            )
+        except Exception as e:  # Handle other potential errors
+            raise RuntimeError(f"Failed to load OpenAI model: {e}")
+
+    def predict(self, agent: AgentModel, model: int):
+        try:
+            self.load_model(model)
+            completion = self.client.beta.chat.completions.parse(
+                model=self.model,  # Use the loaded model
+                messages=[
+                    {"role": "system", "content": agent.role},
+                    {"role": "user", "content": agent.content},
+                ],
+                response_format={
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "my_response",
+                        "schema": agent.agent_schema,
+                    },
+                },
+            )
+            message = completion.choices[0].message
+            print(f"Response: {message.content}")
+            return message.content
+        except Exception as e:
+            raise RuntimeError(f"OpenAI prediction failed: {e}")
+
+    def predict_pydantic_response(
+        self, agent: AgentModel, response_format: BaseModel
+    ) -> BaseModel:
         model = self.load_model(model_name=None)
         completion = self.client.beta.chat.completions.parse(
             model=model,
@@ -34,29 +84,101 @@ class OpenAIClient:
                 {"role": "system", "content": agent.role},
                 {"role": "user", "content": agent.content},
             ],
-            response_format={
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "math_response",
-                    "schema": agent.agent_schema,
-                },
-            },
+            response_format=response_format,
         )
-        chat_completion = completion.choices[0].message.content
-        print(f"Response: {chat_completion}")
-        return chat_completion
+        message = completion.choices[0].message
+        print(f"Response: {message.content}")
+        if not message.parsed:
+            raise ValueError(message.refusal)
+
+        return message.parsed
 
 
 class GoogleClient:
     def __init__(self):
-        self.client = GenerativeModel(google_models[0])
+        # Initialize
+        self.client = None
 
-    def predict(self, agent: AgentModel):
-        completion = self.client.generate_content(
-            agent.role + " : " + agent.content,
-            generation_config=GenerationConfig(
-                response_mime_type="application/json",
-                response_schema=agent.agent_schema,
-            ),
-        )
-        return completion.text
+    def load_model(self, model: int):
+        """Loads the specified Gemini model."""
+        try:
+            model_name = google_models[model]
+            self.client = genai.GenerativeModel(model_name)  # Initialize the model
+            return model_name
+
+        except IndexError:
+            raise ValueError(
+                f"Invalid model index: {model}. Must be within the range of available Google models."
+            )
+        except Exception as e:  # Catch other potential errors during model loading.
+            raise RuntimeError(f"Failed to load Google model: {e}")
+
+    def predict(self, agent: AgentModel, model: int):
+        try:
+            self.load_model(model)
+            completion = self.client.generate_content(
+                agent.role + " : " + agent.content,
+                generation_config=genai.GenerationConfig(
+                    response_mime_type="application/json",
+                    response_schema=agent.agent_schema,
+                ),
+            )
+            print(f"Response: {completion.text}")
+            return completion.text
+        except Exception as e:
+            raise RuntimeError(f"Google prediction failed: {e}")
+
+
+class PerplexityClient:
+    url = ""
+
+    def __init__(self):
+        self.pplx_api_key = get_secret("")
+
+    def load_model(self, model: int):
+        """Loads the specified Perplexity model."""
+        try:
+            model_name = perplexity_models[model]
+            return model_name
+        except IndexError:
+            raise ValueError(
+                f"Invalid model index: {model}. Must be within the range of available Perplexity models."
+            )
+        except Exception as e:
+            raise RuntimeError(f"Failed to load Perplexity model: {e}")
+
+    async def predict(self, agent: AgentModel, model: int): # Make predict async
+        try:
+            model = self.load_model(model)
+            payload = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": agent.role},
+                    {"role": "user", "content": agent.content},
+                ],
+                "search_domain_filter": ["perplexity.ai"],
+                "return_images": False,
+                "return_related_questions": False,
+
+            }
+            headers = {
+                "Authorization": "Bearer " + self.pplx_api_key,
+                "Content-Type": "application/json"
+            }
+            async with httpx.AsyncClient() as client:  
+                        response = await client.post(self.url, headers=headers, json=payload, timeout=600.0)
+                        response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
+                        data = response.json()
+                        content = data["choices"][0]["message"]["content"]
+                        citations = data["citations"]
+                        
+                        # Create a new dictionary 
+                        result = {"content": content, "citations": citations, "provider": "perplexity"}
+                        return orjson.dumps(result) 
+
+
+        except httpx.HTTPError as e:
+            raise RuntimeError(f"Perplexity API request failed: {e}") from e
+        except Exception as e:
+            raise RuntimeError(f"Perplexity prediction failed: {e}") from e
+
