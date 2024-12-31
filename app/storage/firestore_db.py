@@ -3,28 +3,25 @@ import logging
 from google.cloud import firestore
 import orjson
 
-from ..schema.master_schema import DatabaseModel
+from ..agent_schema.agent_master_schema import DatabaseModel
 
 
 # Initialize Firestore client
-db = firestore.Client()
+database = "cal-project"
+db = firestore.Client(database=database)
 logger = logging.getLogger(__name__)
 
 def store_agent_response(response: DatabaseModel) -> str:
     """Store new response in Firestore database"""
     try:
-        # Create a reference to the "test_task_events" collection
-        collection_ref = db.collection("agent_responses")
+        # Reference to the Firestore collection
+        collection_ref = db.collection("users").document(response.user_id).collection("topic_id").document(response.topic_id).collection("agent_responses")
 
         # Generate a custom document ID
         doc_ref = collection_ref.document()
 
         # Convert the TaskEvent object to a JSON string
         data = orjson.loads(response.content)
-
-        # Include topic_id in the data
-        if response.topic_id:
-            data["topic_id"] = response.topic_id
 
         # Set data in the document
         doc_ref.set(data)
@@ -36,6 +33,8 @@ def store_agent_response(response: DatabaseModel) -> str:
             "agent": response.agent,
             "response_id": doc_id,
             "timestamp": firestore.SERVER_TIMESTAMP,
+            "topic_id": response.topic_id,
+            "user_id": response.user_id
         }
 
         doc_ref.update(update_data)
