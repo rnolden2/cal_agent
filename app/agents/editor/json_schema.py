@@ -1,4 +1,4 @@
-json_schema = {
+json_schema_editor = {
     "type": "object",
     "properties": {
         "context": {

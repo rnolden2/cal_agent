@@ -1,4 +1,4 @@
-json_schema = {
+json_schema_customer_connect = {
     "type": "object",
     "properties": {
         "context": {

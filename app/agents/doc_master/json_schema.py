@@ -1,4 +1,4 @@
-json_schema = {
+json_schema_doc_master = {
     "type": "object",
     "properties": {
         "context": {

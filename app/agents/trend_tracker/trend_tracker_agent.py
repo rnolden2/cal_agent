@@ -5,9 +5,9 @@ It stays updated with solicitations from agencies like SBIR, DoD, DoE, and
 NAMC related to permanent magnet motors/generators, power conversion, and 
 inverters. Additionally, it tracks announcements of relevant programs and awards.
 """
-from ...schema.master_schema import AgentModel
+from ...agent_schema.agent_master_schema import AgentModel
 from ...config.agent_list import AgentDescriptions
-from .json_schema import json_schema as json_schema_trend_tracker
+from .json_schema import json_schema_trend_tracker
 
 class TrendTracker:
     def create_prompt(prompt: str) -> AgentModel:

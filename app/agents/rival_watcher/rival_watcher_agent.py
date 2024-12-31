@@ -3,8 +3,8 @@ The Rival Watcher Agent keeps an up-to-date repository of
 competitor information. It gathers useful details on competitors' new 
 developments, locations, divisions or departments, and points of contact.
 """
-from ...schema.master_schema import AgentModel
-from .json_schema import json_schema as json_schema_rival_watcher
+from ...agent_schema.agent_master_schema import AgentModel
+from .json_schema import json_schema_rival_watcher
 from ...config.agent_list import AgentDescriptions
 
 class RivalWatcher:

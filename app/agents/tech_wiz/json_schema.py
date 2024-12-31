@@ -1,4 +1,4 @@
-json_schema = {
+json_schema_tech_wiz = {
     "type": "object",
     "properties": {
         "context": {

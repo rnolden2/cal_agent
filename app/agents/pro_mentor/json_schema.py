@@ -1,4 +1,4 @@
-json_schema = {
+json_schema_pro_mentor = {
     "type": "object",
     "properties": {
         "context": {

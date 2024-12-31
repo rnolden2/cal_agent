@@ -26,9 +26,9 @@ from ...agents import (
 )
 from .pydantic_schema import AgentTask
 from ...llm.manager import callModel
-from ...schema.master_schema import AgentModel, Provider
+from ...agent_schema.agent_master_schema import AgentModel, Provider
 from ...config.agent_list import AgentDescriptions, master_agent_description_prompt
-from .json_schema import json_schema as json_schema_master
+from .json_schema import json_schema_master
 
 
 class MasterAgent:
@@ -42,7 +42,7 @@ class MasterAgent:
         )
         return agent_model
 
-    async def agent_queue(tasks: List[AgentTask], provider: Provider, model: int, topic_id: str):
+    async def agent_queue(tasks: List[AgentTask], provider: Provider, model: int, topic_id: str, user_id: str):
         start = time.time()
 
         def process_task(task: AgentTask, topic_id: str):
@@ -85,8 +85,9 @@ class MasterAgent:
             else:
                 response = None
 
-            if response and topic_id:
+            if response and topic_id and user_id:
                 response.topic_id = topic_id
+                response.user_id = user_id
             return response  # Return the response
 
         responses = [process_task(task, topic_id=topic_id) for task in tasks]
@@ -94,7 +95,7 @@ class MasterAgent:
         # Gather the calls to callModel
         agent_responses = await asyncio.gather(
             *(
-                callModel(agent=response, provider=provider, model=model)
+                callModel(agent=response, provider=provider, model=model,)
                 for response in responses
                 if response
             )

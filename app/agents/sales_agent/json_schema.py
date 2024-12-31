@@ -1,4 +1,4 @@
-json_schema = {
+json_schema_sales_agent = {
     "type": "object",
     "properties": {
         "context": {

@@ -1,4 +1,4 @@
-json_schema = {
+json_schema_trend_tracker = {
     "type": "object",
     "properties": {
         "context": {

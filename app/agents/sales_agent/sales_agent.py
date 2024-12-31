@@ -7,9 +7,9 @@ engagement tactics, and highlights follow-up strategies to improve client
 relationships. It also analyzes market trends to uncover untapped opportunities, 
 ensuring the business stays ahead in competitive government and defense sectors.
 """
-from ...schema.master_schema import AgentModel
+from ...agent_schema.agent_master_schema import AgentModel
 from ...config.agent_list import AgentDescriptions
-from .json_schema import json_schema as json_schema_sales_agent
+from .json_schema import json_schema_sales_agent
 
 class SalesAgent:
     def create_prompt(prompt: str) -> AgentModel:

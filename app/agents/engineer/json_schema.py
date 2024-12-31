@@ -1,4 +1,4 @@
-json_schema = {
+json_schema_engineer = {
     "type": "object",
     "properties": {
         "context": {

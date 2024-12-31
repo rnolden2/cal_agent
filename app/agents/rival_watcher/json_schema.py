@@ -1,4 +1,4 @@
-json_schema = {
+json_schema_rival_watcher = {
     "type": "object",
     "properties": {
         "context": {
