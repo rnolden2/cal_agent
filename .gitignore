@@ -29,5 +29,7 @@ misc/
 # Git-related Files (usually automatically ignored)
 *.git
 
-
+# Script files
+combine_script.py
+app/master.py
 
