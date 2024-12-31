@@ -1,11 +1,13 @@
 import os
+import orjson
 from typing import Union
 from pydantic import BaseModel
 from openai import OpenAI
 import google.generativeai as genai
-from ..models.model_list import openai_models, google_models
-from ..schema.master_schema import AgentModel
+from ..models.model_list import openai_models, google_models, perplexity_models
+from ..agent_schema.agent_master_schema import AgentModel
 from google.cloud import secretmanager
+import httpx
 
 
 def get_secret(secret):
@@ -24,6 +26,7 @@ def get_secret(secret):
     # Use the secret value in your app
     # ...
     return secret_value
+
 
 genai_api_key = get_secret("gemini_api")
 genai.configure(api_key=genai_api_key)
@@ -124,3 +127,58 @@ class GoogleClient:
             return completion.text
         except Exception as e:
             raise RuntimeError(f"Google prediction failed: {e}")
+
+
+class PerplexityClient:
+    url = "https://api.perplexity.ai/chat/completions"
+
+    def __init__(self):
+        self.pplx_api_key = get_secret("pplx-api-key")
+
+    def load_model(self, model: int):
+        """Loads the specified Perplexity model."""
+        try:
+            model_name = perplexity_models[model]
+            return model_name
+        except IndexError:
+            raise ValueError(
+                f"Invalid model index: {model}. Must be within the range of available Perplexity models."
+            )
+        except Exception as e:
+            raise RuntimeError(f"Failed to load Perplexity model: {e}")
+
+    async def predict(self, agent: AgentModel, model: int): # Make predict async
+        try:
+            model = self.load_model(model)
+            payload = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": agent.role},
+                    {"role": "user", "content": agent.content},
+                ],
+                "search_domain_filter": ["perplexity.ai"],
+                "return_images": False,
+                "return_related_questions": False,
+
+            }
+            headers = {
+                "Authorization": "Bearer " + self.pplx_api_key,
+                "Content-Type": "application/json"
+            }
+            async with httpx.AsyncClient() as client:  
+                        response = await client.post(self.url, headers=headers, json=payload, timeout=600.0)
+                        response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
+                        data = response.json()
+                        content = data["choices"][0]["message"]["content"]
+                        citations = data["citations"]
+                        
+                        # Create a new dictionary 
+                        result = {"content": content, "citations": citations, "provider": "perplexity"}
+                        return orjson.dumps(result) 
+
+
+        except httpx.HTTPError as e:
+            raise RuntimeError(f"Perplexity API request failed: {e}") from e
+        except Exception as e:
+            raise RuntimeError(f"Perplexity prediction failed: {e}") from e
+
