@@ -19,9 +19,9 @@ from .agents import (
     TrendTracker,
 )
 from .agents.cal_master.cal_master_agent import MasterAgent
-from .agent_schema.agent_master_schema import AgentCallModel, AgentModel
+from .agent_schema.agent_master_schema import AgentCallModel, AgentModel, UpdateAgentRequest
 from .agent_schema.agent_master_schema import AgentTask
-from .storage.firestore_db import set_topic_id
+from .storage.firestore_db import create_agent_document, set_topic_id, agents, update_agent_document
 from .llm.manager import callModel
 import uvicorn
 from fastapi import FastAPI, Request
@@ -183,7 +183,11 @@ async def agentTrendTracker(request: AgentCallModel):
     agent_call = await callModel(agent=agent_data, provider=request.provider, model=request.model)
     return agent_call
 
-
+@app.post("/update-agent/{agent_id}")
+async def update_agent(agent_id: str, update_data: UpdateAgentRequest):
+   response = update_agent_document(agent_id, update_data)
+   return response
+     
 if __name__ == "__main__":
     # Get the server port from the environment variable
     server_port = os.environ.get("PORT", "8080")

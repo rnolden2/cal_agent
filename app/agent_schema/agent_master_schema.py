@@ -62,3 +62,11 @@ class MasterAgentModel(BaseModel):
     tasks: List[AgentTask] = Field(
         ..., description="Tasks routed to individual agents."
     )
+
+class UpdateAgentRequest(BaseModel):
+    api_route: str = None
+    description: str = None
+    description_full: str = None
+    last_updated: str = None
+    role: str = None
+    schema: str = None

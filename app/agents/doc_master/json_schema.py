@@ -3,7 +3,7 @@ json_schema_doc_master = {
     "properties": {
         "context": {
             "type": "string",
-            "description": "The context provided by the user.",
+            "description": "The context or document retrieval task provided by the user.",
         },
         "timestamp": {
             "type": "integer",
@@ -16,58 +16,47 @@ json_schema_doc_master = {
         "response": {
             "type": "object",
             "properties": {
-                "improvement": {
-                    "type": "object",
-                    "properties": {
-                        "personally": {
-                            "type": "object",
-                            "properties": {
-                                "explanation": {
-                                    "type": "string",
-                                    "description": "Explanation of how to improve personally.",
-                                },
-                                "actions": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "string",
-                                        "description": "Array of up to 10 actionable steps to improve personally.",
-                                    },
-                                },
-                            },
-                            "required": ["explanation", "actions"],
-                            "description": "Suggestions for personal improvement.",
-                        },
-                        "professionally": {
-                            "type": "object",
-                            "properties": {
-                                "explanation": {
-                                    "type": "string",
-                                    "description": "Explanation of how to improve professionally.",
-                                },
-                                "actions": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "string",
-                                        "description": "Array of up to 10 actionable steps to improve professionally.",
-                                    },
-                                },
-                            },
-                            "required": ["explanation", "actions"],
-                            "description": "Suggestions for professional improvement.",
-                        },
-                    },
-                    "required": ["personally", "professionally"],
-                    "description": "How the user can improve personally and professionally.",
+                "retrieved_documents": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of documents retrieved relevant to the user request.",
                 },
-                "past_feedback": {
+                "document_metadata": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "title": {
+                                "type": "string",
+                                "description": "Title of the document.",
+                            },
+                            "author": {
+                                "type": "string",
+                                "description": "Author or source of the document.",
+                            },
+                            "publication_date": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "The publication date of the document.",
+                            },
+                            "summary": {
+                                "type": "string",
+                                "description": "A brief summary of the document content.",
+                            },
+                        },
+                        "required": ["title", "author"],
+                    },
+                    "description": "Metadata for the retrieved documents.",
+                },
+                "retrieval_notes": {
                     "type": "string",
-                    "description": "Explanation of how the input relates to previous feedback.",
+                    "description": "Additional notes or insights about the document retrieval process.",
                 },
             },
-            "required": ["improvement", "past_feedback"],
-            "description": "The response object containing suggestions for improvement and feedback details.",
+            "required": ["retrieved_documents"],
+            "description": "Details of the documents retrieved, metadata, and notes.",
         },
     },
     "required": ["context", "timestamp", "response_id", "response"],
-    "description": "Schema for providing improvement suggestions based on input context and past feedback.",
+    "description": "Schema for capturing the Doc_Master Agent's response, including retrieved documents, metadata, and process insights.",
 }
