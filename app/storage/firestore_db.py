@@ -50,6 +50,8 @@ def store_agent_response(response: DatabaseModel) -> str:
         }
 
         doc_ref.update(update_data)
+        print(f"Document created with ID: {doc_id}")
+        print(f"Agent: {response.agent}")
         return doc_id
     # Handle any errors that occur during the Firestore operation
     except Exception as e:
