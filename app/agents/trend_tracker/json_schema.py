@@ -26,40 +26,44 @@ json_schema_trend_tracker = {
                     "items": {"type": "string"},
                     "description": "Array of terms related to what is being searched.",
                 },
-                "search_items": {
+                "content": {
+                    "type": "string",
+                    "description": "The response to items described in prompt.",
+                },
+                "sources": {
                     "type": "array",
                     "items": {
                         "type": "object",
                         "properties": {
-                            "item_name": {
+                            "source_name": {
                                 "type": "string",
                                 "description": "Name of the item.",
                             },
-                            "item_title": {
+                            "source_title": {
                                 "type": "string",
                                 "description": "Title of the item.",
                             },
-                            "item_description": {
+                            "source_description": {
                                 "type": "string",
                                 "description": "Description of the item.",
                             },
-                            "item_source": {
+                            "source_url": {
                                 "type": "string",
-                                "description": "Source of the item.",
+                                "description": "url of the item.",
                             },
                         },
                         "required": [
-                            "item_name",
-                            "item_title",
-                            "item_description",
-                            "item_source",
+                            "source_name",
+                            "source_title",
+                            "source_description",
+                            "source_url",
                         ],
                         "description": "Details of a search item.",
                     },
                     "description": "Array of items related to the search.",
                 },
             },
-            "required": ["keywords", "related_terms", "search_items"],
+            "required": ["keywords", "related_terms", "content", "sources"],
             "description": "The structured response containing keywords, related terms, and search items.",
         },
     },
