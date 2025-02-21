@@ -16,10 +16,6 @@ json_schema_pro_mentor = {
         "response": {
             "type": "object",
             "properties": {
-                "additional_content": {
-                    "type": "string",
-                    "description": "Any additional information that should be included.",
-                },
                 "raw_response": {
                     "type": "object",
                     "properties": {
@@ -59,16 +55,25 @@ json_schema_pro_mentor = {
                             "required": ["explanation", "actions"],
                             "description": "Suggestions for professional improvement.",
                         },
+                        "additional_content": {
+                            "type": "string",
+                            "description": "Any additional information that should be included.",
+                        },
+                        "past_feedback": {
+                            "type": "string",
+                            "description": "Explanation of how the input relates to previous feedback.",
+                        },
                     },
-                    "required": ["personally", "professionally"],
-                    "description": "How the user can improve personally and professionally.",
-                },
-                "past_feedback": {
-                    "type": "string",
-                    "description": "Explanation of how the input relates to previous feedback.",
+                    "required": [
+                        "personally",
+                        "professionally",
+                        "additional_content",
+                        "past_feedback",
+                    ],
+                    "description": "How the user can improve personally and professionally with any additional helpful content and use of past feedback.",
                 },
             },
-            "required": ["additional_content", "past_feedback", "raw_response"],
+            "required": ["raw_response"],
             "description": "The response object containing suggestions for improvement and feedback details.",
         },
     },
