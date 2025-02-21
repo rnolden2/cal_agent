@@ -16,55 +16,13 @@ json_schema_trend_tracker = {
         "response": {
             "type": "object",
             "properties": {
-                "keywords": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "Array of keywords related to the context.",
-                },
-                "related_terms": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "Array of terms related to what is being searched.",
-                },
-                "content": {
+                "raw_response": {
                     "type": "string",
-                    "description": "The response to items described in prompt.",
-                },
-                "sources": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "source_name": {
-                                "type": "string",
-                                "description": "Name of the item.",
-                            },
-                            "source_title": {
-                                "type": "string",
-                                "description": "Title of the item.",
-                            },
-                            "source_description": {
-                                "type": "string",
-                                "description": "Description of the item.",
-                            },
-                            "source_url": {
-                                "type": "string",
-                                "description": "url of the item.",
-                            },
-                        },
-                        "required": [
-                            "source_name",
-                            "source_title",
-                            "source_description",
-                            "source_url",
-                        ],
-                        "description": "Details of a search item.",
-                    },
-                    "description": "Array of items related to the search.",
+                    "description": "Raw response to prompt that includes deep research on trends, insights, and recommendations related. Provide kewords, related terms, and sources.",
                 },
             },
-            "required": ["keywords", "related_terms", "content", "sources"],
-            "description": "The structured response containing keywords, related terms, and search items.",
+            "required": ["raw_response"],
+            "description": "A structured response.",
         },
     },
     "required": ["context", "timestamp", "response_id", "response"],

@@ -82,7 +82,7 @@ def update_agent_document(agent_id: str, update_data: UpdateAgentRequest):
             raise Exception(status_code=404, detail=f"Agent with ID '{agent_id}' does not exist.")
 
         # Convert Pydantic model to dictionary and remove None values
-        update_dict = {k: v for k, v in update_data.dict().items() if v is not None}
+        update_dict = {k: v for k, v in update_data.model_dump_json().items() if v is not None}
 
         if not update_dict:
             raise Exception(status_code=400, detail="No valid data provided for update.")

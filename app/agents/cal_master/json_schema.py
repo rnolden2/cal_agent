@@ -48,8 +48,12 @@ json_schema_master = {
                     },
                     "description": "Tasks routed to individual agents.",
                 },
+                "raw_response": {
+                    "type": "string",
+                    "description": "Raw response to prompt.",
+                },
             },
-            "required": ["task_description", "agents_involved", "tasks"],
+            "required": ["task_description", "agents_involved", "tasks", "raw_response"],
             "description": "Details of the response, including tasks and agents involved.",
         },
     },

@@ -16,34 +16,13 @@ json_schema_sales_agent = {
         "response": {
             "type": "object",
             "properties": {
-                "opportunity_analysis": {
+                "raw_response": {
                     "type": "string",
-                    "description": "Insights into untapped opportunities or weaknesses in the current approach.",
-                },
-                "sales_tactics": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "description": "List of suggested sales strategies tailored to government and defense industries.",
-                },
-                "follow_up_recommendations": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "description": "Suggested steps for follow-ups to optimize sales potential.",
-                },
-                "market_trends": {
-                    "type": "string",
-                    "description": "Analysis of relevant market trends or emerging opportunities.",
+                    "description": "Raw response to prompt that includes sales strategies, opportunity analysis, sales tactics, market trends, business insights, and recommendations from a sales and business perspective.",
                 },
             },
             "required": [
-                "opportunity_analysis",
-                "sales_tactics",
-                "follow_up_recommendations",
-                "market_trends",
+                "raw_response",
             ],
             "description": "Details of the sales strategies and analysis provided by the Sales Agent.",
         },

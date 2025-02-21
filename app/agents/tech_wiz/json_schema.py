@@ -16,21 +16,12 @@ json_schema_tech_wiz = {
         "response": {
             "type": "object",
             "properties": {
-                "bullet_points": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "Array of bullet points, limited to a maximum of 5 items.",
-                },
-                "paragraph": {
+                "raw_response": {
                     "type": "string",
-                    "description": "A detailed paragraph response.",
-                },
-                "report": {
-                    "type": "string",
-                    "description": "A full report provided as part of the response.",
+                    "description": "Raw response to prompt that includes technical insights, solutions, recommendations, and resources. Write a bullet point list, a paragraph, and a full report.",
                 },
             },
-            "required": ["bullet_points", "paragraph", "report"],
+            "required": ["raw_response"],
             "description": "The structured response including bullet points, a paragraph, and a report.",
         },
     },

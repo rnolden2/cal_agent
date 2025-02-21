@@ -16,6 +16,10 @@ json_schema_pro_mentor = {
         "response": {
             "type": "object",
             "properties": {
+                "raw_response": {
+                    "type": "string",
+                    "description": "Raw response to prompt.",
+                },
                 "improvement": {
                     "type": "object",
                     "properties": {
@@ -32,7 +36,7 @@ json_schema_pro_mentor = {
                                         "type": "string",
                                         "description": "Array of up to 10 actionable steps to improve personally.",
                                     },
-                       },
+                                },
                             },
                             "required": ["explanation", "actions"],
                             "description": "Suggestions for personal improvement.",
@@ -50,7 +54,7 @@ json_schema_pro_mentor = {
                                         "type": "string",
                                         "description": "Array of up to 10 actionable steps to improve professionally.",
                                     },
-               },
+                                },
                             },
                             "required": ["explanation", "actions"],
                             "description": "Suggestions for professional improvement.",
@@ -64,7 +68,7 @@ json_schema_pro_mentor = {
                     "description": "Explanation of how the input relates to previous feedback.",
                 },
             },
-            "required": ["improvement", "past_feedback"],
+            "required": ["improvement", "past_feedback", "raw_response"],
             "description": "The response object containing suggestions for improvement and feedback details.",
         },
     },

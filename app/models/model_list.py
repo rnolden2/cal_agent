@@ -1,5 +1,8 @@
 gpt_4o = "gpt-4o"
 gpt_4o_mini = "gpt-4o-mini"
+gpt_o1 = "o1"
+gpt_o1_mini = "o1-mini"
+gpt_o3_mini = "o3-mini"
 gemini_15 = "gemini-1.5-flash-002"
 gemini_15_8b = "gemini-1.5-flash-8b"
 gemini_pro = "gemini-1.5-pro-latest"
@@ -8,6 +11,6 @@ pplx_small = "llama-3.1-sonar-small-128k-online"
 pplx_large = "llama-3.1-sonar-large-128k-online"
 pplx_huge = "llama-3.1-sonar-huge-128k-online"
 
-openai_models = [gpt_4o, gpt_4o_mini]
+openai_models = [gpt_4o, gpt_4o_mini, gpt_o1, gpt_o1_mini, gpt_o3_mini]
 google_models = [gemini_15, gemini_15_8b, gemini_pro, gemini_2_exp]
 perplexity_models = [pplx_small, pplx_large, pplx_huge]

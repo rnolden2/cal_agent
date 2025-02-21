@@ -16,37 +16,13 @@ json_schema_engineer = {
         "response": {
             "type": "object",
             "properties": {
-                "concepts_explained": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "description": "List of engineering concepts, terms, or equations relevant to the task.",
-                },
-                "recommended_resources": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "description": "Suggested books, research papers, or courses for deepening understanding.",
-                },
-                "engineering_practices": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "description": "Best practices or methodologies applicable to the task.",
-                },
-                "big_picture_analysis": {
+                "raw_response": {
                     "type": "string",
-                    "description": "Overview of how the task fits into broader engineering principles.",
+                    "description": "Raw response to prompt. that includes engineering concepts, resources, big picture analysis and recommendations.",
                 },
-                "task_specific_guidance": {
-                    "type": "string",
-                    "description": "Recommendations tailored to the specific engineering problem.",
-                },
+
             },
-            "required": ["concepts_explained"],
+            "required": ["raw_response"],
             "description": "Details of the engineering concepts, resources, and recommendations.",
         },
     },

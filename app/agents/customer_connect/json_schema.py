@@ -16,30 +16,19 @@ json_schema_customer_connect = {
         "response": {
             "type": "object",
             "properties": {
-                "email": {
+                "raw_response": {
                     "type": "string",
-                    "description": "The email response that should be used by the user.",
+                    "description": "Raw response to prompt.",
                 },
-                "follow_up": {
-                    "type": "object",
-                    "properties": {
-                        "days_to_wait": {
-                            "type": "integer",
-                            "description": "Suggested amount of days to wait to follow-up.",
-                        },
-                        "suggestions": {
-                            "type": "string",
-                            "description": "Follow-up suggestions provided.",
-                        },
-                    },
-                    "required": ["days_to_wait", "suggestions"],
-                    "description": "Follow-up details, including timeframe and suggestions.",
+                "additional_content": {
+                    "type": "string",
+                    "description": "Any additional information that should be included.",
                 },
             },
-            "required": ["email", "follow_up"],
+            "required": ["raw_response", "additional_content"],
             "description": "The response details, including the email and follow-up information.",
         },
     },
     "required": ["context", "timestamp", "response_id", "response"],
-    "description": "Schema for input context, email, and follow-up suggestions.",
+    "description": "Schema for input context, timestamp, and response details.",
 }

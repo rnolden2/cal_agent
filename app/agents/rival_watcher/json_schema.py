@@ -16,61 +16,12 @@ json_schema_rival_watcher = {
         "response": {
             "type": "object",
             "properties": {
-                "competitor_data": {
-                    "type": "object",
-                    "properties": {
-                        "name": {
-                            "type": "string",
-                            "description": "Name of the competitor.",
-                        },
-                        "location": {
-                            "type": "string",
-                            "description": "Location of the competitor.",
-                        },
-                        "website": {
-                            "type": "string",
-                            "description": "Website of the competitor.",
-                        },
-                        "description": {
-                            "type": "string",
-                            "description": "Description of the competitor.",
-                        },
-                        "competitive_product": {
-                            "type": "string",
-                            "description": "Competitor's product that competes with yours.",
-                        },
-                        "articles": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "source_name": {
-                                        "type": "string",
-                                        "description": "Name of the source for the article.",
-                                    },
-                                    "link": {
-                                        "type": "string",
-                                        "description": "Link to the article.",
-                                    },
-                                },
-                                "required": ["source_name", "link"],
-                                "description": "Details of an article related to the competitor.",
-                            },
-                            "description": "Array of articles related to the competitor.",
-                        },
-                    },
-                    "required": [
-                        "name",
-                        "location",
-                        "website",
-                        "description",
-                        "competitive_product",
-                        "articles",
-                    ],
-                    "description": "Details of a competitor, including related articles.",
+                "raw_response": {
+                    "type": "string",
+                    "description": "Raw response to prompt. that includes competitor-related data i.e. links descriptions etc.",
                 },
             },
-            "required": ["competitor_data"],
+            "required": ["raw_response"],
             "description": "The response object containing competitor-related data.",
         },
     },
