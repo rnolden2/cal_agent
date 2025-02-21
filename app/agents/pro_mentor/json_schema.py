@@ -16,11 +16,11 @@ json_schema_pro_mentor = {
         "response": {
             "type": "object",
             "properties": {
-                "raw_response": {
+                "additional_content": {
                     "type": "string",
-                    "description": "Raw response to prompt.",
+                    "description": "Any additional information that should be included.",
                 },
-                "improvement": {
+                "raw_response": {
                     "type": "object",
                     "properties": {
                         "personally": {
@@ -68,7 +68,7 @@ json_schema_pro_mentor = {
                     "description": "Explanation of how the input relates to previous feedback.",
                 },
             },
-            "required": ["improvement", "past_feedback", "raw_response"],
+            "required": ["additional_content", "past_feedback", "raw_response"],
             "description": "The response object containing suggestions for improvement and feedback details.",
         },
     },
