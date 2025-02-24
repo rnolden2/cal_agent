@@ -5,7 +5,7 @@ The system is an intelligent orchestration platform designed to manage and strea
 
 ## Key Features
 - Route tasks dynamically to specialized agents.
-- Aggregate responses from multiple agents into a unified output.
+- Aggregate responses from multiple agents into a unified output. (Development)
 - Integrates with agents such as Customer Connect, Professional Mentor, and Technical Wizard.
 - Supports flexible input and output schemas.
 
