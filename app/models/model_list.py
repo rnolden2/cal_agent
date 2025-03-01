@@ -11,6 +11,6 @@ pplx_small = "llama-3.1-sonar-small-128k-online"
 pplx_large = "llama-3.1-sonar-large-128k-online"
 pplx_huge = "llama-3.1-sonar-huge-128k-online"
 
-openai_models = [gpt_4o, gpt_4o_mini, gpt_o1, gpt_o1_mini, gpt_o3_mini]
-google_models = [gemini_15, gemini_15_8b, gemini_pro, gemini_2_exp]
-perplexity_models = [pplx_small, pplx_large, pplx_huge]
+openai_models = [gpt_4o_mini, gpt_4o]
+google_models = [gemini_15, gemini_2_exp]
+perplexity_models = [pplx_small, pplx_huge]

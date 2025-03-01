@@ -1,17 +1,13 @@
 json_schema_pro_mentor = {
     "type": "object",
     "properties": {
-        "context": {
+        "agent": {
             "type": "string",
-            "description": "The context provided by the user.",
+            "description": "The agent used to respond.",
         },
-        "timestamp": {
-            "type": "integer",
-            "description": "The timestamp in milliseconds when the input was generated.",
-        },
-        "response_id": {
+        "prompt": {
             "type": "string",
-            "description": "A unique identifier derived from the timestamp for integrity checks or uniqueness.",
+            "description": "The prompt provided by the user.",
         },
         "response": {
             "type": "object",
@@ -77,6 +73,6 @@ json_schema_pro_mentor = {
             "description": "The response object containing suggestions for improvement and feedback details.",
         },
     },
-    "required": ["context", "timestamp", "response_id", "response"],
+    "required": ["agent","prompt", "response"],
     "description": "Schema for providing improvement suggestions based on input context and past feedback.",
 }

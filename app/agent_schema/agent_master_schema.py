@@ -8,6 +8,8 @@ class AgentModel(BaseModel):
     content: str
     agent_schema: Union[Dict, Any]
     additional_context: Optional[str] = None
+    model: Optional[int] = None
+    provider: Optional[str] = None
     topic_id: Optional[str] = None
     user_id: Optional[str] = None
 
@@ -32,7 +34,6 @@ class ProMentorAgentResponse(BaseModel):
 
 
 class DatabaseModel(BaseModel):
-    agent: str
     content: Union[str, Dict]
     topic_id: Optional[str] = None
     user_id: str

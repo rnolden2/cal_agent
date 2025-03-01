@@ -76,6 +76,10 @@ class AgentDescriptions(Enum):
     Stay updated with agencies such as SBIR, DoD, DoE, and NAMC. Provide concise 
     and timely reports summarizing your findings.
     """
+    REVIEWER = """
+    As a Reviewer Agent, your task is to ensure each response is in the correct 
+    json format with prompt and response as top level key names. 
+    """
 
 customer_connect_description_prompt = """
 As the Customer Engagement Agent, assist in creating professional and 
@@ -140,8 +144,13 @@ Consider the following when managing tasks:
 - If the user doesn't specify which agent to use, infer the best agent(s) based 
   on the task description.
 - Craft a prompt that is clear and well-suited for the agent being used.
+- Use a consistent format such as Purpose, Context, Task, and Criteria (PCTC).
 - Maintain consistency and clarity in your interactions.
-- Always include the Professional Mentor agent.
+- Determine the optimal provider and llm model for each agent's response. 
+- For all simple and quick tasks, use 0 for model.
+- For tasks requiring reasoning or complexity, use 1 for model.
+- For less complex tasks, use the OpenAI API. 
+- For more complex tasks, use Google and for research tasks use Perplexity API.
 
 Agents are:
 """

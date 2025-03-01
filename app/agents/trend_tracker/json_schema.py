@@ -1,17 +1,13 @@
 json_schema_trend_tracker = {
     "type": "object",
     "properties": {
-        "context": {
+        "agent": {
             "type": "string",
-            "description": "The context provided by the user.",
+            "description": "The agent used to respond.",
         },
-        "timestamp": {
-            "type": "integer",
-            "description": "The timestamp in milliseconds when the input was generated.",
-        },
-        "response_id": {
+        "prompt": {
             "type": "string",
-            "description": "A unique identifier derived from the timestamp for integrity checks or uniqueness.",
+            "description": "The prompt provided by the user.",
         },
         "response": {
             "type": "object",
@@ -25,6 +21,6 @@ json_schema_trend_tracker = {
             "description": "A structured response.",
         },
     },
-    "required": ["context", "timestamp", "response_id", "response"],
-    "description": "Schema for providing input context and search-related data.",
+    "required": ["agent","prompt", "response"],
+    "description": "Schema for providing deep research on trends, insights, and recommendations.",
 }

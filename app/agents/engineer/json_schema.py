@@ -1,17 +1,13 @@
 json_schema_engineer = {
     "type": "object",
     "properties": {
-        "context": {
+        "agent": {
             "type": "string",
-            "description": "The context or engineering problem provided by the user.",
+            "description": "The agent used to respond.",
         },
-        "timestamp": {
-            "type": "integer",
-            "description": "The timestamp in milliseconds when the input was generated.",
-        },
-        "response_id": {
+        "prompt": {
             "type": "string",
-            "description": "A unique identifier derived from the timestamp for integrity checks or uniqueness.",
+            "description": "The prompt or engineering problem provided by the user.",
         },
         "response": {
             "type": "object",
@@ -20,12 +16,11 @@ json_schema_engineer = {
                     "type": "string",
                     "description": "Raw response to prompt. that includes engineering concepts, resources, big picture analysis and recommendations.",
                 },
-
             },
             "required": ["raw_response"],
             "description": "Details of the engineering concepts, resources, and recommendations.",
         },
     },
-    "required": ["context", "timestamp", "response_id", "response"],
+    "required": ["agent","prompt", "response"],
     "description": "Schema for capturing the Engineer Agent's response, including concepts, resources, and analysis.",
 }
