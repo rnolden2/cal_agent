@@ -141,7 +141,7 @@ Consider the following when managing tasks:
   on the task description.
 - Craft a prompt that is clear and well-suited for the agent being used.
 - Maintain consistency and clarity in your interactions.
-- Always include the Professional Mentor agent.
+- Always include the Professional Mentor agent and add all relatable feedback to context.
 
 Agents are:
 """

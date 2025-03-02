@@ -13,6 +13,8 @@ operations across agents.
 import asyncio
 import time
 from typing import List
+
+import orjson
 from ...agents import (
     CustomerConnect,
     DocMaster,
@@ -24,6 +26,7 @@ from ...agents import (
     TechWiz,
     TrendTracker,
 )
+from .additional_context import additional_context, feedback_notes
 from .pydantic_schema import AgentTask
 from ...llm.manager import callModel
 from ...agent_schema.agent_master_schema import AgentModel, Provider
@@ -32,17 +35,57 @@ from .json_schema import json_schema_master
 
 
 class MasterAgent:
+
+
     def create_prompt(prompt: str) -> AgentModel:
+        json_schema_related_data = {
+            "type": "object",
+            "properties": {
+                "related_data": {
+                    "type": "string",
+                    "description": "The context provided by the user.",
+                },
+                "required": [
+                    "related_data",
+                ],
+                "description": "Schema for getting related data.",
+            },
+        }        
+        related_data_prompt = (
+            "Using this prompt pull all related data useful to support the response. prompt: "
+            + prompt
+            + " Data: "
+            + additional_context
+        )
         schema_to_use = json_schema_master
+        # related_data_response = AgentModel(
+        #     role="Organizer",
+        #     content=related_data_prompt,
+        #     agent_schema=json_schema_related_data,
+        #     agent="Organizer",
+        # )
+        # related_data_call = await callModel(
+        #     agent=related_data_response,
+        #     provider="google",
+        #     model=0,
+        # )
+        # response_dict = orjson.loads(related_data_call)
         agent_model = AgentModel(
             role=master_agent_description_prompt,
             content=prompt,
+            additional_context="",
             agent_schema=schema_to_use,
             agent=AgentDescriptions.MASTER_AGENT.name,
         )
         return agent_model
 
-    async def agent_queue(tasks: List[AgentTask], provider: Provider, model: int, topic_id: str, user_id: str):
+    async def agent_queue(
+        tasks: List[AgentTask],
+        provider: Provider,
+        model: int,
+        topic_id: str,
+        user_id: str,
+    ):
         start = time.time()
 
         def process_task(task: AgentTask, topic_id: str):
@@ -63,9 +106,7 @@ class MasterAgent:
                     task.prompt + " " + task.additional_context
                 )
             elif task.agent_name == AgentDescriptions.PRO_MENTOR.name:
-                response = ProMentor.create_prompt(
-                    task.prompt + " " + task.additional_context
-                )
+                response = ProMentor.create_prompt(task.prompt + " " + feedback_notes)
             elif task.agent_name == AgentDescriptions.RIVAL_WATCHER.name:
                 response = RivalWatcher.create_prompt(
                     task.prompt + " " + task.additional_context
@@ -95,7 +136,11 @@ class MasterAgent:
         # Gather the calls to callModel
         agent_responses = await asyncio.gather(
             *(
-                callModel(agent=response, provider=provider, model=model,)
+                callModel(
+                    agent=response,
+                    provider=provider,
+                    model=model,
+                )
                 for response in responses
                 if response
             )
@@ -103,7 +148,7 @@ class MasterAgent:
 
         # Use all agent responses to use when invoking the Professional Mentor Agent
         # combined_response = "\n\n".join(agent_responses)
-  
+
         end = time.time()
         time_length = end - start
         print(f"It took {time_length} seconds")

@@ -17,60 +17,8 @@ json_schema_pro_mentor = {
             "type": "object",
             "properties": {
                 "raw_response": {
-                    "type": "object",
-                    "properties": {
-                        "personally": {
-                            "type": "object",
-                            "properties": {
-                                "explanation": {
-                                    "type": "string",
-                                    "description": "Explanation of how to improve personally.",
-                                },
-                                "actions": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "string",
-                                        "description": "Array of up to 10 actionable steps to improve personally.",
-                                    },
-                                },
-                            },
-                            "required": ["explanation", "actions"],
-                            "description": "Suggestions for personal improvement.",
-                        },
-                        "professionally": {
-                            "type": "object",
-                            "properties": {
-                                "explanation": {
-                                    "type": "string",
-                                    "description": "Explanation of how to improve professionally.",
-                                },
-                                "actions": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "string",
-                                        "description": "Array of up to 10 actionable steps to improve professionally.",
-                                    },
-                                },
-                            },
-                            "required": ["explanation", "actions"],
-                            "description": "Suggestions for professional improvement.",
-                        },
-                        "additional_content": {
-                            "type": "string",
-                            "description": "Any additional information that should be included.",
-                        },
-                        "past_feedback": {
-                            "type": "string",
-                            "description": "Explanation of how the input relates to previous feedback.",
-                        },
-                    },
-                    "required": [
-                        "personally",
-                        "professionally",
-                        "additional_content",
-                        "past_feedback",
-                    ],
-                    "description": "How the user can improve personally and professionally with any additional helpful content and use of past feedback.",
+                    "type": "string",
+                    "description": "Markdown response to prompt that includes personal and professional improvement suggestions. Include explanations and actionable steps for improvement. Include any additional content and relate to past feedback.",
                 },
             },
             "required": ["raw_response"],
