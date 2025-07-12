@@ -3,7 +3,7 @@ json_schema_rival_watcher = {
     "properties": {
         "agent": {
             "type": "string",
-            "description": "The agent used to respond.",
+            "description": "Return RIVAL_WATCHER",
         },
         "prompt": {
             "type": "string",

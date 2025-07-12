@@ -3,7 +3,7 @@ json_schema_reviewer = {
     "properties": {
         "agent": {
             "type": "string",
-            "description": "The agent used to respond.",
+            "description": "Same agent name as in the agent list.",
         },
         "prompt": {
             "type": "string",

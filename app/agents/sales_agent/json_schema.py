@@ -3,7 +3,7 @@ json_schema_sales_agent = {
     "properties": {
         "agent": {
             "type": "string",
-            "description": "The agent used to respond.",
+            "description": "Return SALES_AGENT",
         },
         "prompt": {
             "type": "string",

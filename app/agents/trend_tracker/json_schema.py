@@ -3,7 +3,7 @@ json_schema_trend_tracker = {
     "properties": {
         "agent": {
             "type": "string",
-            "description": "The agent used to respond.",
+            "description": "Return TREND_TRACKER",
         },
         "prompt": {
             "type": "string",

@@ -3,7 +3,7 @@ json_schema_customer_connect = {
     "properties": {
         "agent": {
             "type": "string",
-            "description": "The agent used to respond.",
+            "description": "Return Customer Connect",
         },
         "prompt": {
             "type": "string",

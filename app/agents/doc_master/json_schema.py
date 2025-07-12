@@ -3,7 +3,7 @@ json_schema_doc_master = {
     "properties": {
         "agent": {
             "type": "string",
-            "description": "The agent used to respond.",
+            "description": "Return DOC_MASTER",
         },
         "prompt": {
             "type": "string",

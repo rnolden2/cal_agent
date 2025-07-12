@@ -3,7 +3,7 @@ json_schema_tech_wiz = {
     "properties": {
         "agent": {
             "type": "string",
-            "description": "The agent used to respond.",
+            "description": "Return TECH_WIZ",
         },
         "prompt": {
             "type": "string",

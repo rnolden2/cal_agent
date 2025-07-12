@@ -3,7 +3,7 @@ json_schema_engineer = {
     "properties": {
         "agent": {
             "type": "string",
-            "description": "The agent used to respond.",
+            "description": "Return ENGINEER_AGENT",
         },
         "prompt": {
             "type": "string",

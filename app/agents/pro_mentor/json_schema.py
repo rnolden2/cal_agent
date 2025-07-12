@@ -3,7 +3,7 @@ json_schema_pro_mentor = {
     "properties": {
         "agent": {
             "type": "string",
-            "description": "The agent used to respond.",
+            "description": "Return PRO_MENTOR",
         },
         "prompt": {
             "type": "string",

@@ -3,7 +3,7 @@ json_schema_editor = {
     "properties": {
         "agent": {
             "type": "string",
-            "description": "The agent used to respond.",
+            "description": "Return EDITOR_AGENT",
         },
         "prompt": {
             "type": "string",
