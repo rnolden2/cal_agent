@@ -27,7 +27,7 @@ from .agents import (
     TechWiz,
     TrendTracker,
 )
-from .agents.cal_master.master_v2 import MasterAgent
+from .agents.cal_master.master import MasterAgent
 from .llm.manager import callModel
 from .storage.firestore_db import set_topic_id, update_agent_document
 

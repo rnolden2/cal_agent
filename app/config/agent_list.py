@@ -150,7 +150,7 @@ Consider the following when managing tasks:
 - For all simple and quick tasks, use 0 for model.
 - For tasks requiring reasoning or complexity, use 1 for model.
 - For less complex tasks, use the OpenAI API. 
-- For more complex tasks, use Google and for research tasks use Perplexity API.
+- For more complex tasks, use Google and for Trend_Tracker use Perplexity API.
 
 Agents are:
 """

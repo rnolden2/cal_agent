@@ -70,6 +70,7 @@ class OpenAIClient:
         except Exception as e:
             raise RuntimeError(f"OpenAI prediction failed: {e}")
 
+
 class GoogleClient:
     def __init__(self):
         # Initialize
@@ -82,7 +83,7 @@ class GoogleClient:
                 model_name = google_models[model]
                 self.client = genai.GenerativeModel(model_name)  # Initialize the model
             else:
-                model_name = 0
+                model_name = google_models[0]
                 self.client = genai.GenerativeModel(model_name)  # Initialize the model
 
         except IndexError:
@@ -159,7 +160,7 @@ class PerplexityClient:
                         "content": response,
                         "citations": citations,
                         "provider": "perplexity",
-                    }
+                    },
                 }
                 return orjson.dumps(result)
 

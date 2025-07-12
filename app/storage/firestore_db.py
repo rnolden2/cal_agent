@@ -12,7 +12,7 @@ db = firestore.Client(database=database)
 
 
 
-def store_agent_response(response: DatabaseModel) -> str:
+async def store_agent_response(response: DatabaseModel) -> str:
     """Store new response in Firestore database"""
     try:
         # Reference to the Firestore collection
