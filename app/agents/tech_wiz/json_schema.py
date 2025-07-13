@@ -1,17 +1,13 @@
 json_schema_tech_wiz = {
     "type": "object",
     "properties": {
-        "context": {
+        "agent": {
             "type": "string",
-            "description": "The context provided by the user.",
+            "description": "Return TECH_WIZ",
         },
-        "timestamp": {
-            "type": "integer",
-            "description": "The timestamp in milliseconds when the input was generated.",
-        },
-        "response_id": {
+        "prompt": {
             "type": "string",
-            "description": "A unique identifier derived from the timestamp for integrity checks or uniqueness.",
+            "description": "The prompt provided by the user.",
         },
         "response": {
             "type": "object",
@@ -25,6 +21,6 @@ json_schema_tech_wiz = {
             "description": "The structured response including bullet points, a paragraph, and a report.",
         },
     },
-    "required": ["context", "timestamp", "response_id", "response"],
-    "description": "Schema for input context and a structured response.",
+    "required": ["agent","prompt", "response"],
+    "description": "Schema for capturing the Tech Wiz Agent's response, including technical insights, solutions, and recommendations.",
 }

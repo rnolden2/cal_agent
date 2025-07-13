@@ -1,17 +1,13 @@
 json_schema_doc_master = {
     "type": "object",
     "properties": {
-        "context": {
+        "agent": {
             "type": "string",
-            "description": "The context or document retrieval task provided by the user.",
+            "description": "Return DOC_MASTER",
         },
-        "timestamp": {
-            "type": "integer",
-            "description": "The timestamp in milliseconds when the input was generated.",
-        },
-        "response_id": {
+        "prompt": {
             "type": "string",
-            "description": "A unique identifier derived from the timestamp for integrity checks or uniqueness.",
+            "description": "The prompt or document retrieval task provided by the user.",
         },
         "response": {
             "type": "object",
@@ -57,6 +53,6 @@ json_schema_doc_master = {
             "description": "Details of the documents retrieved, metadata, and notes.",
         },
     },
-    "required": ["context", "timestamp", "response_id", "response"],
+    "required": ["agent","prompt", "response"],
     "description": "Schema for capturing the Doc_Master Agent's response, including retrieved documents, metadata, and process insights.",
 }

@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "The system is an intelligent orchestration platform designed to manage and streamline tasks across a team of specialized AI agents. Each agent is tailored to handle specific domains, such as customer communication, document retrieval, technical content creation, and market research. The system's core component, the Master Agent, dynamically routes requests to the appropriate agents based on the task's requirements, aggregates responses, and presents unified, actionable outputs to users. It ensures seamless interaction, adaptability, and efficiency, making it ideal for environments requiring cross-functional collaboration and intelligent task management."
 authors = ["randynolden <rnolden2@gmail.com>"]
 readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.11"

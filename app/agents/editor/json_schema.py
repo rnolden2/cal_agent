@@ -1,17 +1,13 @@
 json_schema_editor = {
     "type": "object",
     "properties": {
-        "context": {
+        "agent": {
+            "type": "string",
+            "description": "Return EDITOR_AGENT",
+        },
+        "prompt": {
             "type": "string",
             "description": "The original technical piece provided by the user for editing.",
-        },
-        "timestamp": {
-            "type": "integer",
-            "description": "The timestamp in milliseconds when the input was generated.",
-        },
-        "response_id": {
-            "type": "string",
-            "description": "A unique identifier derived from the timestamp for integrity checks or uniqueness.",
         },
         "response": {
             "type": "object",
@@ -26,9 +22,7 @@ json_schema_editor = {
                 },
                 "style_principles_applied": {
                     "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
+                    "items": {"type": "string"},
                     "description": "List of principles or practices applied from 'The Elements of Style' or 'On Writing Well.'",
                 },
                 "suggested_improvements": {
@@ -37,9 +31,7 @@ json_schema_editor = {
                 },
                 "example_revisions": {
                     "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
+                    "items": {"type": "string"},
                     "description": "Specific examples of revisions made with explanations.",
                 },
             },
@@ -47,6 +39,6 @@ json_schema_editor = {
             "description": "Details of the edited text, changes made, and additional recommendations.",
         },
     },
-    "required": ["context", "timestamp", "response_id", "response"],
+    "required": ["agent","prompt", "response"],
     "description": "Schema for capturing the Editor Agent's response, including edited text and applied principles.",
 }
