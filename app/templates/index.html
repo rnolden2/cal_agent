@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CAL Dashboard</title>
+  <style>
+    :root {
+      --primary: #1e90ff;
+      --secondary: #ff8c00;
+      --bg-light: #f8f9fa;
+      --bg-dark: #343a40;
+      --text-dark: #212529;
+      --text-light: #ffffff;
+      --spacing: 16px;
+      --radius: 8px;
+      --transition-speed: 0.3s;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-light);
+      color: var(--text-dark);
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      background: var(--bg-dark);
+      color: var(--text-light);
+      display: flex;
+      flex-direction: column;
+      padding: var(--spacing);
+    }
+
+    .sidebar h2 {
+      margin-bottom: var(--spacing);
+      font-size: 1.5rem;
+    }
+
+    .nav-item {
+      margin-bottom: var(--spacing);
+      padding: var(--spacing) 0;
+      cursor: pointer;
+      transition: color var(--transition-speed);
+    }
+
+    .nav-item:hover {
+      color: var(--primary);
+    }
+
+    .main {
+      padding: calc(var(--spacing) * 2);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: var(--spacing);
+      overflow: auto;
+    }
+
+    section {
+      display: none;
+    }
+
+    section.active {
+      display: block;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: calc(var(--spacing) * 2);
+    }
+
+    .header h1 {
+      font-size: 2rem;
+    }
+
+    .header input[type="search"] {
+      padding: var(--spacing);
+      border: 1px solid #ccc;
+      border-radius: var(--radius);
+      width: 200px;
+    }
+
+    .upload-panel {
+      background: var(--text-light);
+      border: 2px dashed #ccc;
+      border-radius: var(--radius);
+      padding: var(--spacing);
+      text-align: center;
+      cursor: pointer;
+      transition: border-color var(--transition-speed);
+      margin-bottom: calc(var(--spacing) * 2);
+    }
+
+    .upload-panel:hover {
+      border-color: var(--primary);
+    }
+
+    .prompt-panel {
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: var(--spacing);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing);
+      margin-bottom: calc(var(--spacing) * 2);
+    }
+
+    .prompt-panel textarea {
+      width: 100%;
+      padding: var(--spacing);
+      border: 1px solid #ccc;
+      border-radius: var(--radius);
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .prompt-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--spacing);
+    }
+
+    .select-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+    }
+
+    .select-group select {
+      padding: var(--spacing);
+      border: 1px solid #ccc;
+      border-radius: var(--radius);
+      font-size: 1rem;
+    }
+
+    .prompt-panel button {
+      padding: var(--spacing) 1.5em;
+      background: var(--primary);
+      color: var(--text-light);
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background var(--transition-speed);
+      font-size: 1rem;
+    }
+
+    .prompt-panel button:hover {
+      background: #187bcd;
+    }
+
+    .response-panel {
+      background: #fff;
+      border-left: 4px solid var(--primary);
+      border-radius: var(--radius);
+      padding: var(--spacing);
+      margin-top: var(--spacing);
+      max-height: 200px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      font-family: monospace;
+    }
+
+    .agents-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: var(--spacing);
+    }
+
+    .history-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: var(--spacing);
+      max-height: 85vh;
+      overflow-y: auto;
+      padding-right: 8px;
+      /* account for scrollbar */
+    }
+
+    .history-detail {
+      max-height: 80vh;
+      overflow-y: auto;
+      background: #fff;
+      padding: var(--spacing);
+      border-radius: var(--radius);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .back-btn {
+      margin-bottom: var(--spacing);
+      padding: 0.5em 1em;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+    }
+
+    .detail-field {
+      margin-bottom: var(--spacing);
+    }
+
+    .detail-field label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: var(--spacing);
+      transition: transform var(--transition-speed);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+    }
+
+    .card h3 {
+      font-size: 1.25rem;
+      margin-bottom: var(--spacing);
+    }
+
+    .card p {
+      font-size: 0.9rem;
+      text-align: justify;
+      margin-bottom: var(--spacing);
+    }
+
+    .card .details {
+      display: none;
+      border-top: 1px solid #eee;
+      padding-top: var(--spacing);
+    }
+
+    .card.expanded .details {
+      display: block;
+    }
+
+    .details-field {
+      margin-bottom: var(--spacing);
+    }
+
+    .details-field label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .footer {
+      text-align: center;
+      padding: var(--spacing);
+      font-size: 0.8rem;
+      color: #666;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        flex-direction: row;
+        overflow-x: auto;
+      }
+
+      .main {
+        padding: var(--spacing);
+        grid-template-rows: auto 1fr auto;
+      }
+
+      .header h1 {
+        font-size: 1.5rem;
+      }
+
+      .header input[type="search"] {
+        width: 100px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="sidebar">
+    <h2>CAL Dashboard</h2>
+    <div class="nav-item" data-target="dashboard">Master</div>
+    <div class="nav-item" data-target="upload">Upload</div>
+    <div class="nav-item" data-target="history">History</div>
+    <div class="nav-item" data-target="settings">Settings</div>
+    <div class="nav-item" data-target="agents">Agents</div>
+  </div>
+  <div class="main">
+    <!-- Dashboard -->
+    <section id="dashboard" class="active">
+      <div class="header">
+        <h1>Dashboard</h1>
+        <input type="search" placeholder="Search..." />
+      </div>
+      <div class="upload-panel">Drag & Drop to Upload Notes or Click to Browse</div>
+      <div class="prompt-panel">
+        <textarea placeholder="Enter your prompt here..."></textarea>
+        <div class="prompt-footer">
+          <div class="select-group">
+            <label for="agentSelect">Agent:</label>
+            <select id="agentSelect">
+              <option value="MASTER_AGENT" selected>Master</option>
+              <option value="CUSTOMER_CONNECT">CustomerConnect</option>
+              <option value="DOCUMENT_MASTER">DocumentMaster</option>
+              <option value="EDITOR">Editor</option>
+              <option value="ENGINEER">Engineer</option>
+              <option value="PROFESSIONAL_MENTOR">ProfessionalMentor</option>
+              <option value="RIVAL_WATCHER">RivalWatcher</option>
+              <option value="SALES">Sales</option>
+              <option value="TECHNICAL_WIZARD">TechnicalWizard</option>
+              <option value="TREND_TRACKER">TrendTracker</option>
+            </select>
+          </div>
+          <div class="select-group">
+            <label for="modelSelect">Model:</label>
+            <select id="modelSelect">
+              <option value="google">Google</option>
+              <option value="openai">OpenAI</option>
+              <option value="perplexity">Perplexity</option>
+            </select>
+          </div>
+          <button>Submit Prompt</button>
+        </div>
+      </div>
+      <!-- Response Section -->
+      <div class="response-panel" id="responsePanel"></div>
+    </section>
+    <!-- Agents -->
+    <section id="agents">
+      <h2>Agents</h2>
+      <div class="agents-list">
+        <div class="card">
+          <h3>CustomerConnect</h3>
+          <p>Assists in drafting professional email communications.</p>
+        </div>
+        <div class="card">
+          <h3>DocumentMaster</h3>
+          <p>Retrieves and organizes documents such as technical papers, presentations, and standards.</p>
+        </div>
+        <div class="card">
+          <h3>Editor</h3>
+          <p>Edits all written documentation using a custom format and writing style.</p>
+        </div>
+        <div class="card">
+          <h3>Engineer</h3>
+          <p>Provides insights into technical terms, equations, and best practices.</p>
+        </div>
+        <div class="card">
+          <h3>ProfessionalMentor</h3>
+          <p>Provides personalized coaching for improving work performance and task prioritization.</p>
+        </div>
+        <div class="card">
+          <h3>RivalWatcher</h3>
+          <p>Gathers and updates information on competitors for strategic decision-making.</p>
+        </div>
+        <div class="card">
+          <h3>Sales</h3>
+          <p>Provides recommendations to optimize sales and maximize business opportunities.</p>
+        </div>
+        <div class="card">
+          <h3>TechnicalWizard</h3>
+          <p>Produces high-quality technical content, such as proposal sections and technical bullet points.</p>
+        </div>
+        <div class="card">
+          <h3>TrendTracker</h3>
+          <p>Monitors market trends, solicitations, and programs related to specific industries.</p>
+        </div>
+      </div>
+    </section>
+    <!-- History -->
+    <section id="history">
+      <h1>History</h1>
+      <div class="history-list" id="historyList"></div>
+    </section>
+    <section id="historyDetail">
+      <button class="back-btn" id="backBtn">← Back to History</button>
+      <div class="history-detail" id="detailContainer"></div>
+    </section>
+    <section id="upload">
+      <h1>Upload</h1>
+    </section>
+    <section id="settings">
+      <h1>Settings</h1>
+    </section>
+    <div class="footer">&copy; 2025 CAL Dashboard • All rights reserved</div>
+  </div>
+  <script>
+    const navItems = document.querySelectorAll('.nav-item');
+    const sections = {
+      dashboard: document.getElementById('dashboard'),
+      history: document.getElementById('history'),
+      historyDetail: document.getElementById('historyDetail'),
+      agents: document.getElementById('agents')
+    };
+    const showSection = key => {
+      Object.values(sections).forEach(sec => sec.classList.remove('active'));
+      sections[key].classList.add('active');
+    };
+    navItems.forEach(item => item.addEventListener('click', () => showSection(item.dataset.target)));
+    // Load history list
+    document.querySelector('[data-target="history"]').addEventListener('click', async () => {
+      const list = document.getElementById('historyList'); list.innerHTML = '';
+      try {
+        const res = await fetch('/responses'); const data = await res.json();
+        data.forEach(record => {
+          const obj = JSON.parse(record.content);
+          // print('Record:',obj);
+          const agent = obj.agent || 'Unknown'; 
+          const prompt = obj.prompt || obj.context ||  'No context provided';
+          const response = obj.response.raw_response || obj.response || 'No response provided';
+          const rawTs = obj.timestamp;
+          let timestampStr = 'N/A';
+          if (rawTs) {
+            if (typeof rawTs === 'string') {
+              timestampStr = rawTs;
+            } else if (rawTs._seconds) {
+              timestampStr = new Date(rawTs._seconds * 1000).toLocaleString();
+            }
+          }
+          const truncated = prompt.split(' ').slice(0, 15).join(' ') + (prompt.split(' ').length > 15 ? '...' : '');
+          const card = document.createElement('div'); card.className = 'card';
+          card.innerHTML = `<h3>${agent}</h3><p>${truncated}</p>`;
+          card.addEventListener('click', () => {
+            const container = document.getElementById('detailContainer'); container.innerHTML = '';
+            // Display agent and other simple fields
+            [['Agent', agent], ['Prompt', prompt], ['Timestamp', timestampStr]].forEach(([label, val]) => {
+              const fld = document.createElement('div'); fld.className = 'detail-field';
+              fld.innerHTML = `<label>${label}:</label><div>${val}</div>`;
+              container.appendChild(fld);
+            });
+            // Render response map keys and values
+            if (response && typeof response === 'object') {
+              Object.entries(response).forEach(([key, val]) => {
+                const fld = document.createElement('div'); fld.className = 'detail-field';
+                fld.innerHTML = `<label>${key}:</label><div>${val}</div>`;
+                container.appendChild(fld);
+              });
+            }
+            showSection('historyDetail');
+          });
+          list.appendChild(card);
+        });
+      } catch (e) { historyList.textContent = 'Failed to load history.'; }
+    });
+    document.getElementById('backBtn').addEventListener('click', () => showSection('history'));
+    // Initialize to dashboard
+    showSection('dashboard');
+    // Submit Prompt API call
+    const submitButton = document.querySelector('.prompt-panel button');
+    const responsePanel = document.getElementById('responsePanel');
+    submitButton.addEventListener('click', async () => {
+      const promptText = document.querySelector('.prompt-panel textarea').value;
+      const agent = document.getElementById('agentSelect').value;
+      const provider = document.getElementById('modelSelect').value;
+      if (!promptText) return alert('Please enter a prompt.');
+      const endpointMap = { 'MASTER_AGENT': 'master', 'CUSTOMER_CONNECT': 'customerconnect', 'DOCUMENT_MASTER': 'docmaster', 'EDITOR': 'editor', 'ENGINEER': 'engineer', 'PROFESSIONAL_MENTOR': 'promentor', 'RIVAL_WATCHER': 'rivalwatcher', 'SALES': 'sales', 'TECHNICAL_WIZARD': 'techwiz', 'TREND_TRACKER': 'trendtracker' };
+      const endpoint = endpointMap[agent] || 'master';
+      const payload = { provider: provider, model: 0, response: promptText, additional_context: '', topic_id: '', user_id: 'DLbMxLvPkcPmGJuWYCh0' };
+      try {
+        submitButton.disabled = true;
+        submitButton.textContent = 'Submitting...';
+        responsePanel.textContent = '';
+        const res = await fetch(`/${endpoint}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const data = await res.json();
+        responsePanel.textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        responsePanel.textContent = 'Error submitting prompt.';
+        console.error(error);
+      } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Submit Prompt';
+      }
+    });
+  </script>
+</body>
+
+</html>

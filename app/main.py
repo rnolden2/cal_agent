@@ -4,16 +4,18 @@ CAL - Collaborative AI Layer
 
 import logging
 import os
+from typing import List, Optional
 
 import uvicorn
-from fastapi import FastAPI
-# from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Query
+from fastapi.responses import HTMLResponse
 # from fastapi.templating import Jinja2Templates
 # from starlette.middleware.cors import CORSMiddleware
 
 from .agent_schema.agent_master_schema import (
     AgentCallModel,
     AgentModel,
+    DatabaseModel,
     UpdateAgentRequest,
 )
 from .agents import (
@@ -29,16 +31,18 @@ from .agents import (
 )
 from .agents.cal_master.master import MasterAgent
 from .llm.manager import callModel
-from .storage.firestore_db import set_topic_id, update_agent_document
+from .storage.firestore_db import get_agent_responses, set_topic_id, update_agent_document
 
 app = FastAPI()
 
 logger = logging.getLogger(__name__)
 
 
-@app.get("/")
-def hello():
-    return "hello"
+@app.get("/", response_class=HTMLResponse)
+async def read_root():
+    html_file_path = os.path.join(os.path.dirname(__file__), "templates", "index.html")
+    with open(html_file_path) as f:
+        return f.read()
 
 
 @app.get("/ping")
@@ -224,6 +228,28 @@ async def update_agent(agent_id: str, update_data: UpdateAgentRequest):
     response = update_agent_document(agent_id, update_data)
     return response
 
+@app.get(
+    "/responses",
+)
+async def read_responses(
+    topic_id: Optional[str] = Query(
+        None, description="Only return responses for this topic_id"
+    ),
+    user_id: Optional[str] = Query(
+        None, description="Only return responses for this user_id"
+    ),
+    limit: int = Query(
+        50,
+        ge=1,
+        le=100,
+        description="Maximum number of responses to return (most recent first)"
+    )
+) -> List[DatabaseModel]:
+    """
+    Fetch up to `limit` most-recent agent responses from Firestore,
+    optionally filtered by topic_id and/or user_id.
+    """
+    return await get_agent_responses(topic_id=topic_id, user_id=user_id, limit=limit)
 
 if __name__ == "__main__":
     # Get the server port from the environment variable
