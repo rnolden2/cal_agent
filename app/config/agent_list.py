@@ -146,6 +146,7 @@ Consider the following when managing tasks:
 - Craft a prompt that is clear and well-suited for the agent being used.
 - Use a consistent format such as Purpose, Context, Task, and Criteria (PCTC).
 - Maintain consistency and clarity in your interactions.
+- Always include the Professional Mentor agent and add all relatable feedback to context.
 - Determine the optimal provider and llm model for each agent's response. 
 - For all simple and quick tasks, use 0 for model.
 - For tasks requiring reasoning or complexity, use 1 for model.
