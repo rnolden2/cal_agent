@@ -136,7 +136,8 @@ class MasterAgent:
                 )
 
                 promentor_response = await Aggregator.call_pro_mentor(Aggregator.aggregate_responses([response for response in agent_response]))
-                agent_response.append( promentor_response)
+                agent_response.append(promentor_response)
+                print(f"Agent Responses: {agent_response}")
 
                 await MasterAgent.store_agent_response_in_db(agent_call, agent_response)
             except Exception as e:

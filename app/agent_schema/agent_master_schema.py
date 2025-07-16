@@ -70,4 +70,4 @@ class UpdateAgentRequest(BaseModel):
     description_full: str = None
     last_updated: str = None
     role: str = None
-    schema: str = None
+    agent_schema: str = None
