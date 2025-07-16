@@ -1,4 +1,4 @@
-FROM python:3.11-slim AS builder
+FROM python:3.12-slim AS builder
 
 # Install Poetry
 RUN pip install --no-cache-dir poetry==1.3.2
@@ -19,7 +19,7 @@ RUN --mount=type=cache,target=/tmp/poetry_cache \
     poetry install --only main --no-root
 
 # Final runtime stage
-FROM python:3.11-slim AS runtime
+FROM python:3.12-slim AS runtime
 
 # Set up virtual environment
 ENV VIRTUAL_ENV=/app/.venv \
