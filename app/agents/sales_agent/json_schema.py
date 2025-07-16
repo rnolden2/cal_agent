@@ -1,17 +1,13 @@
 json_schema_sales_agent = {
     "type": "object",
     "properties": {
-        "context": {
+        "agent": {
             "type": "string",
-            "description": "The context provided by the user.",
+            "description": "Return SALES_AGENT",
         },
-        "timestamp": {
-            "type": "integer",
-            "description": "The timestamp in milliseconds when the input was generated.",
-        },
-        "response_id": {
+        "prompt": {
             "type": "string",
-            "description": "A unique identifier derived from the timestamp for integrity checks or uniqueness.",
+            "description": "The prompt provided by the user.",
         },
         "response": {
             "type": "object",
@@ -27,6 +23,6 @@ json_schema_sales_agent = {
             "description": "Details of the sales strategies and analysis provided by the Sales Agent.",
         },
     },
-    "required": ["context", "timestamp", "response_id", "response"],
+    "required": ["agent","prompt", "response"],
     "description": "Schema for capturing the Sales Agent's response, including insights, tactics, and recommendations.",
 }

@@ -1,17 +1,13 @@
 json_schema_rival_watcher = {
     "type": "object",
     "properties": {
-        "context": {
+        "agent": {
             "type": "string",
-            "description": "The context provided by the user.",
+            "description": "Return RIVAL_WATCHER",
         },
-        "timestamp": {
-            "type": "integer",
-            "description": "The timestamp in milliseconds when the input was generated.",
-        },
-        "response_id": {
+        "prompt": {
             "type": "string",
-            "description": "A unique identifier derived from the timestamp for integrity checks or uniqueness.",
+            "description": "The prompt provided by the user.",
         },
         "response": {
             "type": "object",
@@ -25,6 +21,6 @@ json_schema_rival_watcher = {
             "description": "The response object containing competitor-related data.",
         },
     },
-    "required": ["context", "timestamp", "response_id", "response"],
-    "description": "Schema for providing input context and competitor-related data.",
+    "required": ["agent","prompt", "response"],
+    "description": "Schema for providing competitor-related data.",
 }

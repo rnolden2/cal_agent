@@ -3,6 +3,8 @@ from typing import List
 
 class AgentTask(BaseModel):
     agent_name: str = Field(..., description="Name of the agent to handle the task.")
+    provider: str = Field(..., description="Provider to use for the task.")
+    model: int = Field(..., description="Model to use for the task 0 or 1.")
     prompt: str = Field(..., description="Task-specific prompt crafted for the agent.")
     additional_context: str = Field(
         None, description="Optional additional context for the task."

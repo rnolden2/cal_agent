@@ -1,7 +1,4 @@
-import os
 import orjson
-from typing import Union
-from pydantic import BaseModel
 from openai import OpenAI
 import google.generativeai as genai
 from ..models.model_list import openai_models, google_models, perplexity_models
@@ -22,9 +19,6 @@ def get_secret(secret):
 
     # Extract the secret value
     secret_value = response.payload.data.decode("UTF-8")
-
-    # Use the secret value in your app
-    # ...
     return secret_value
 
 
@@ -41,8 +35,10 @@ class OpenAIClient:
     def load_model(self, model: int):
         """Loads the specified OpenAI model."""
         try:
-            self.model = openai_models[model]  # Set the model attribute
-            return self.model  # Return the loaded model name for informational purposes
+            if model:
+                self.model = openai_models[model]  # Set the model attribute
+            else:
+                self.model = openai_models[0]  # Set the model to default
 
         except IndexError:
             raise ValueError(
@@ -51,9 +47,9 @@ class OpenAIClient:
         except Exception as e:  # Handle other potential errors
             raise RuntimeError(f"Failed to load OpenAI model: {e}")
 
-    def predict(self, agent: AgentModel, model: int):
+    def predict(self, agent: AgentModel):
         try:
-            self.load_model(model)
+            self.load_model(agent.model)
             completion = self.client.beta.chat.completions.parse(
                 model=self.model,  # Use the loaded model
                 messages=[
@@ -74,25 +70,6 @@ class OpenAIClient:
         except Exception as e:
             raise RuntimeError(f"OpenAI prediction failed: {e}")
 
-    def predict_pydantic_response(
-        self, agent: AgentModel, response_format: BaseModel
-    ) -> BaseModel:
-        model = self.load_model(model_name=None)
-        completion = self.client.beta.chat.completions.parse(
-            model=model,
-            messages=[
-                {"role": "system", "content": agent.role},
-                {"role": "user", "content": agent.content},
-            ],
-            response_format=response_format,
-        )
-        message = completion.choices[0].message
-        print(f"Response: {message.content}")
-        if not message.parsed:
-            raise ValueError(message.refusal)
-
-        return message.parsed
-
 
 class GoogleClient:
     def __init__(self):
@@ -102,9 +79,12 @@ class GoogleClient:
     def load_model(self, model: int):
         """Loads the specified Gemini model."""
         try:
-            model_name = google_models[model]
-            self.client = genai.GenerativeModel(model_name)  # Initialize the model
-            return model_name
+            if model:
+                model_name = google_models[model]
+                self.client = genai.GenerativeModel(model_name)  # Initialize the model
+            else:
+                model_name = google_models[0]
+                self.client = genai.GenerativeModel(model_name)  # Initialize the model
 
         except IndexError:
             raise ValueError(
@@ -113,9 +93,9 @@ class GoogleClient:
         except Exception as e:  # Catch other potential errors during model loading.
             raise RuntimeError(f"Failed to load Google model: {e}")
 
-    def predict(self, agent: AgentModel, model: int):
+    def predict(self, agent: AgentModel):
         try:
-            self.load_model(model)
+            self.load_model(agent.model)
             completion = self.client.generate_content(
                 agent.role + " : " + agent.content,
                 generation_config=genai.GenerationConfig(
@@ -123,7 +103,7 @@ class GoogleClient:
                     response_schema=agent.agent_schema,
                 ),
             )
-            print(f"Response: {completion.text}")
+            # print(f"Response: {completion.text}")
             return completion.text
         except Exception as e:
             raise RuntimeError(f"Google prediction failed: {e}")
@@ -147,9 +127,9 @@ class PerplexityClient:
         except Exception as e:
             raise RuntimeError(f"Failed to load Perplexity model: {e}")
 
-    async def predict(self, agent: AgentModel, model: int):  # Make predict async
+    async def predict(self, agent: AgentModel):  # Make predict async
         try:
-            model = self.load_model(model)
+            model = self.load_model(agent.model)
             payload = {
                 "model": model,
                 "messages": [
@@ -180,7 +160,7 @@ class PerplexityClient:
                         "content": response,
                         "citations": citations,
                         "provider": "perplexity",
-                    }
+                    },
                 }
                 return orjson.dumps(result)
 
