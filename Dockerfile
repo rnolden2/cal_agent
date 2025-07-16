@@ -1,7 +1,7 @@
 FROM python:3.12-slim AS builder
 
 # Install Poetry
-RUN pip install --no-cache-dir poetry==1.3.2
+RUN pip install --no-cache-dir poetry==2.1.3
 
 # Set environment variables for Poetry
 ENV POETRY_NO_INTERACTION=1 \
