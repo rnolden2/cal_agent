@@ -23,7 +23,7 @@ def get_secret(secret):
 
 
 genai_api_key = get_secret("gemini_api")
-genai.configure(api_key=genai_api_key)
+genai.Client(api_key=genai_api_key)
 
 
 class OpenAIClient:
