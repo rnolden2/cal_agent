@@ -85,27 +85,22 @@ class MasterAgent:
 
     @staticmethod
     async def store_agent_response_in_db(
-        agent_call: AgentCallModel, responses: List[str]
+        topic_id: str, user_id: str, agent_name: str, response: str
     ) -> None:
         """
-        Stores agent responses in the database along with their agent names.
+        Stores a single agent response in the database.
         """
         try:
-            tasks_for_db: List[DatabaseModel] = [
-                DatabaseModel(
-                    content=response,
-                    topic_id=agent_call.topic_id,
-                    user_id=agent_call.user_id,
-                    agent_name=orjson.loads(response)["agent"],  # Make sure your DatabaseModel supports this field.
-                )
-                for  response in responses
-            ]
-            await asyncio.gather(
-                *(store_agent_response(response=db_item) for db_item in tasks_for_db)
+            db_item = DatabaseModel(
+                content=response,
+                topic_id=topic_id,
+                user_id=user_id,
+                agent_name=agent_name,
             )
-            logging.info("Agent responses stored in the database successfully.")
+            await store_agent_response(response=db_item)
+            logging.info(f"Response from agent {agent_name} stored successfully.")
         except Exception as e:
-            logging.error(f"Error in store_agent_response_in_db: {e}", exc_info=True)
+            logging.error(f"Error storing response for agent {agent_name}: {e}", exc_info=True)
 
 
     @staticmethod
@@ -121,30 +116,46 @@ class MasterAgent:
 
         master_prompt = MasterAgent.create_prompt(prompt)
         tasks: List[AgentTask] = await MasterAgent.get_agent_tasks(master_prompt, topic_id, user_id)
+        
         processed_agents: List[AgentModel] = [
             MasterAgent.process_task(task) for task in tasks if task
         ]
+        # Filter out agents that couldn't be processed
+        processed_agents = [agent for agent in processed_agents if agent]
 
         async def process_agent_responses():
             try:
-                # Gather responses along with agent names.
-                agent_response: List[str] = await asyncio.gather(
-                    *(
-                        callModel(agent_model)
-                        for agent_model in processed_agents if agent_model is not None
-                    )
+                # Gather responses from all agents.
+                agent_responses: List[str] = await asyncio.gather(
+                    *(callModel(agent_model) for agent_model in processed_agents)
                 )
 
-                promentor_response = await Aggregator.call_pro_mentor(Aggregator.aggregate_responses([response for response in agent_response]))
-                agent_response.append(promentor_response)
-                print(f"Agent Responses: {agent_response}")
+                # Store each agent's response
+                storage_tasks = []
+                for agent_model, response_content in zip(processed_agents, agent_responses):
+                    storage_tasks.append(
+                        MasterAgent.store_agent_response_in_db(
+                            topic_id, user_id, agent_model.agent, response_content
+                        )
+                    )
+                
+                await asyncio.gather(*storage_tasks)
 
-                await MasterAgent.store_agent_response_in_db(agent_call, agent_response)
+                # Now handle ProMentor
+                if len(agent_responses) >= 0:
+                    promentor_response_content = await Aggregator.call_pro_mentor(
+                        Aggregator.aggregate_responses(agent_responses)
+                    )
+                
+                await MasterAgent.store_agent_response_in_db(
+                    topic_id, user_id, AgentDescriptions.PRO_MENTOR.name, promentor_response_content
+                )
+
             except Exception as e:
                 logging.error(f"Error in processing agent responses: {e}", exc_info=True)
 
-        # Schedule background processing and return immediately.
-        asyncio.create_task(process_agent_responses())
+        # Await the processing of agent responses.
+        await process_agent_responses()
         elapsed = time.time() - start_time
-        logging.info(f"Orchestration triggered in {elapsed:.2f} seconds")
+        logging.info(f"Orchestration completed in {elapsed:.2f} seconds")
         return "Completed"

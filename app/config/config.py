@@ -1,7 +1,6 @@
 import orjson
 from openai import OpenAI
-from google import genai
-# from google.genai import types
+import google.generativeai as genai
 from ..models.model_list import openai_models, google_models, perplexity_models
 from ..agent_schema.agent_master_schema import AgentModel
 from google.cloud import secretmanager
