@@ -11,7 +11,7 @@ json_schema_reviewer = {
         },
         "response": {
             "type": "string",
-            "description": "The prompt.",
+            "description": "The response from the agent.",
         },
     },
     "required": ["agent", "prompt", "response"],

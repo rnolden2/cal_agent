@@ -180,6 +180,14 @@
       gap: var(--spacing);
     }
 
+    .history-detail-card {
+      margin-top: var(--spacing);
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: var(--spacing);
+    }
+
     .history-list {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -194,9 +202,12 @@
       max-height: 80vh;
       overflow-y: auto;
       background: #fff;
-      padding: var(--spacing);
+      padding: calc(var(--spacing) * 1.5);
       border-radius: var(--radius);
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing);
     }
 
     .back-btn {
@@ -210,13 +221,23 @@
     }
 
     .detail-field {
-      margin-bottom: var(--spacing);
+      border: 1px solid #eee;
+      border-radius: var(--radius);
+      padding: var(--spacing);
+      background: #f9f9f9;
     }
 
     .detail-field label {
       font-weight: bold;
       display: block;
-      margin-bottom: 4px;
+      margin-bottom: 8px;
+      color: var(--primary);
+    }
+
+    .detail-field div {
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-wrap: break-word;
     }
 
     .card {
@@ -296,6 +317,7 @@
       }
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 
 <body>
@@ -306,6 +328,7 @@
     <div class="nav-item" data-target="history">History</div>
     <div class="nav-item" data-target="settings">Settings</div>
     <div class="nav-item" data-target="agents">Agents</div>
+    <div class="nav-item" onclick="window.location.href='/market-research'">Market Research</div>
   </div>
   <div class="main">
     <!-- Dashboard -->
@@ -346,6 +369,8 @@
       </div>
       <!-- Response Section -->
       <div class="response-panel" id="responsePanel"></div>
+      <!-- History Detail Card -->
+      <div class="history-detail-card" id="historyDetailCard" style="display: none;"></div>
     </section>
     <!-- Agents -->
     <section id="agents">
@@ -431,13 +456,11 @@
           const prompt = obj.prompt || obj.context ||  'No context provided';
           const response = obj.response.raw_response || obj.response || 'No response provided';
           const rawTs = obj.timestamp;
+          console.log('Raw Timestamp:', rawTs);
           let timestampStr = 'N/A';
           if (rawTs) {
-            if (typeof rawTs === 'string') {
-              timestampStr = rawTs;
-            } else if (rawTs._seconds) {
-              timestampStr = new Date(rawTs._seconds * 1000).toLocaleString();
-            }
+            rawTs = rawTs.toDate();
+            timestampStr = rawTs.toLocaleDateString() + ' ' + rawTs.toLocaleTimeString();
           }
           const truncated = prompt.split(' ').slice(0, 15).join(' ') + (prompt.split(' ').length > 15 ? '...' : '');
           const card = document.createElement('div'); card.className = 'card';
@@ -445,19 +468,15 @@
           card.addEventListener('click', () => {
             const container = document.getElementById('detailContainer'); container.innerHTML = '';
             // Display agent and other simple fields
-            [['Agent', agent], ['Prompt', prompt], ['Timestamp', timestampStr]].forEach(([label, val]) => {
+            [['Agent', agent], ['Response', response], ['Prompt', prompt], ['Timestamp', timestampStr]].forEach(([label, val]) => {
               const fld = document.createElement('div'); fld.className = 'detail-field';
-              fld.innerHTML = `<label>${label}:</label><div>${val}</div>`;
+              if (label === 'Response') {
+                fld.innerHTML = `<label>${label}:</label><div>${marked.parse(val)}</div>`;
+              } else {
+                fld.innerHTML = `<label>${label}:</label><div>${val}</div>`;
+              }
               container.appendChild(fld);
             });
-            // Render response map keys and values
-            if (response && typeof response === 'object') {
-              Object.entries(response).forEach(([key, val]) => {
-                const fld = document.createElement('div'); fld.className = 'detail-field';
-                fld.innerHTML = `<label>${key}:</label><div>${val}</div>`;
-                container.appendChild(fld);
-              });
-            }
             showSection('historyDetail');
           });
           list.appendChild(card);
@@ -485,6 +504,48 @@
         const res = await fetch(`/${endpoint}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         const data = await res.json();
         responsePanel.textContent = JSON.stringify(data, null, 2);
+
+        // Fetch the latest history entry and display it
+        const historyRes = await fetch('/responses?limit=1');
+        const historyData = await historyRes.json();
+        if (historyData.length > 0) {
+          const record = historyData[0];
+          const obj = JSON.parse(record.content);
+          const agent = obj.agent || 'Unknown';
+          const prompt = obj.prompt || obj.context || 'No context provided';
+          const response = obj.response.raw_response || obj.response || 'No response provided';
+          const rawTs = obj.timestamp;
+          let timestampStr = 'N/A';
+          if (rawTs) {
+            if (typeof rawTs === 'string') {
+              timestampStr = rawTs;
+            } else if (rawTs._seconds) {
+              timestampStr = new Date(rawTs._seconds * 1000).toLocaleString();
+            }
+          }
+
+          const historyCard = document.getElementById('historyDetailCard');
+          historyCard.innerHTML = `
+            <h3>Latest Entry</h3>
+            <div class="detail-field">
+              <label>Agent:</label>
+              <div>${agent}</div>
+            </div>
+            <div class="detail-field">
+              <label>Prompt:</label>
+              <div>${prompt}</div>
+            </div>
+            <div class="detail-field">
+              <label>Response:</label>
+              <div>${marked.parse(response)}</div>
+            </div>
+            <div class="detail-field">
+              <label>Timestamp:</label>
+              <div>${timestampStr}</div>
+            </div>
+          `;
+          historyCard.style.display = 'block';
+        }
       } catch (error) {
         responsePanel.textContent = 'Error submitting prompt.';
         console.error(error);

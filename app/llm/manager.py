@@ -4,10 +4,12 @@ from typing import Dict
 
 from ..agent_schema.agent_master_schema import AgentModel, DatabaseModel, Provider
 from ..config.config import GoogleClient, OpenAIClient, PerplexityClient
+from ..utils.llm_counter import increment_llm_call_counter
 
 
 async def callModel(agent: AgentModel) -> str:
     try:
+        increment_llm_call_counter()  # Increment the counter for each call
         provider_clients: Dict[Provider, type] = {
             Provider.GOOGLE: GoogleClient,
             Provider.OPENAI: OpenAIClient,

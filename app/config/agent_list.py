@@ -76,6 +76,9 @@ class AgentDescriptions(Enum):
     Stay updated with agencies such as SBIR, DoD, DoE, and NAMC. Provide concise 
     and timely reports summarizing your findings.
     """
+    GENERAL = """
+    You are a helpful assistant.
+    """
     REVIEWER = """
     As a Reviewer Agent, your task is to ensure each response is in the correct 
     json format with prompt and response as top level key names. 
@@ -158,10 +161,10 @@ Agents are:
     + f"{AgentDescriptions.CUSTOMER_CONNECT.name}: {AgentDescriptions.CUSTOMER_CONNECT.value}\n"
     + f"{AgentDescriptions.DOC_MASTER.name}: {AgentDescriptions.DOC_MASTER.value}\n"
     + f"{AgentDescriptions.ENGINEER_AGENT.name}: {AgentDescriptions.ENGINEER_AGENT.value}\n"
-    + f"{AgentDescriptions.PRO_MENTOR.name}: {AgentDescriptions.PRO_MENTOR.value}\n"
     + f"{AgentDescriptions.RIVAL_WATCHER.name}: {AgentDescriptions.RIVAL_WATCHER.value}\n"
     + f"{AgentDescriptions.SALES_AGENT.name}: {AgentDescriptions.SALES_AGENT.value}\n"
     + f"{AgentDescriptions.TECH_WIZ.name}: {AgentDescriptions.TECH_WIZ.value}\n"
     + f"{AgentDescriptions.TREND_TRACKER.name}: {AgentDescriptions.TREND_TRACKER.value}\n"
+    + f"{AgentDescriptions.PRO_MENTOR.name}: {AgentDescriptions.PRO_MENTOR.value}\n"
 )
 

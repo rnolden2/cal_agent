@@ -33,3 +33,6 @@ misc/
 combine_script.py
 app/master.py
 
+master.txt
+app/config/config.py
+app/resources/templates/market_research.txt

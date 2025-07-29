@@ -37,6 +37,7 @@ class DatabaseModel(BaseModel):
     content: Union[str, Dict]
     topic_id: Optional[str] = None
     user_id: str
+    agent_name: Optional[str] = None
 
 
 class AgentTask(BaseModel):
@@ -70,4 +71,4 @@ class UpdateAgentRequest(BaseModel):
     description_full: str = None
     last_updated: str = None
     role: str = None
-    schema: str = None
+    agent_schema: str = None
