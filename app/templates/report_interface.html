@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAL Report Generation Interface - Collaborative Intelligence</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .interface-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.2em;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn.success { background: linear-gradient(135deg, #27ae60, #229954); }
+        .btn.warning { background: linear-gradient(135deg, #f39c12, #e67e22); }
+        .btn.danger { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 350px 1fr 300px;
+            gap: 20px;
+            height: calc(100vh - 140px);
+        }
+
+        .sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            overflow-y: auto;
+        }
+
+        .content-area {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .verification-panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            overflow-y: auto;
+        }
+
+        .section-progress {
+            margin-bottom: 30px;
+        }
+
+        .section-progress h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .progress-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #ddd;
+            transition: all 0.3s ease;
+        }
+
+        .progress-item.completed {
+            border-left-color: #27ae60;
+            background: #d5f4e6;
+        }
+
+        .progress-item.in-progress {
+            border-left-color: #f39c12;
+            background: #fef9e7;
+            animation: pulse-progress 2s infinite;
+        }
+
+        .progress-item.pending {
+            border-left-color: #95a5a6;
+            background: #f8f9fa;
+        }
+
+        @keyframes pulse-progress {
+            0% { background: #fef9e7; }
+            50% { background: #fcf3cd; }
+            100% { background: #fef9e7; }
+        }
+
+        .progress-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .progress-icon.completed { background: #27ae60; }
+        .progress-icon.in-progress { background: #f39c12; }
+        .progress-icon.pending { background: #95a5a6; }
+
+        .progress-details {
+            flex: 1;
+        }
+
+        .progress-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .progress-subtitle {
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+
+        .progress-agents {
+            font-size: 0.8em;
+            color: #3498db;
+            margin-top: 5px;
+        }
+
+        .report-editor {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .editor-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 2px solid #ecf0f1;
+            margin-bottom: 20px;
+        }
+
+        .editor-toolbar h2 {
+            color: #2c3e50;
+            font-size: 1.4em;
+        }
+
+        .toolbar-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .toolbar-btn {
+            background: #ecf0f1;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .toolbar-btn:hover {
+            background: #d5dbdb;
+        }
+
+        .toolbar-btn.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .editor-content {
+            flex: 1;
+            background: #fdfdfd;
+            border: 2px solid #ecf0f1;
+            border-radius: 10px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .verification-dashboard h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            border-bottom: 3px solid #8e44ad;
+            padding-bottom: 10px;
+        }
+
+        .verification-summary {
+            background: linear-gradient(135deg, #8e44ad, #732d91);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .verification-score {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .verification-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .source-list {
+            margin-bottom: 20px;
+        }
+
+        .source-list h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .source-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #ddd;
+        }
+
+        .source-item.verified {
+            border-left-color: #27ae60;
+            background: #d5f4e6;
+        }
+
+        .source-item.pending {
+            border-left-color: #f39c12;
+            background: #fef9e7;
+        }
+
+        .source-item.failed {
+            border-left-color: #e74c3c;
+            background: #fadbd8;
+        }
+
+        .source-status {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .source-status.verified { background: #27ae60; }
+        .source-status.pending { background: #f39c12; }
+        .source-status.failed { background: #e74c3c; }
+
+        .source-details {
+            flex: 1;
+            font-size: 0.9em;
+        }
+
+        .source-url {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .source-url:hover {
+            text-decoration: underline;
+        }
+
+        .source-reliability {
+            color: #7f8c8d;
+            font-size: 0.8em;
+            margin-top: 3px;
+        }
+
+        .quality-metrics {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .quality-metrics h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .metric-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+
+        .metric-value {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .metric-bar {
+            width: 100%;
+            height: 6px;
+            background: #ecf0f1;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .metric-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #27ae60, #2ecc71);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .collaborative-indicators {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            max-width: 250px;
+        }
+
+        .collaborative-indicators h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .agent-indicator {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        .agent-avatar {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .agent-avatar.trend-tracker { background: #3498db; }
+        .agent-avatar.engineer { background: #e67e22; }
+        .agent-avatar.sales { background: #27ae60; }
+        .agent-avatar.editor { background: #9b59b6; }
+
+        .agent-status {
+            color: #7f8c8d;
+        }
+
+        .section-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+
+        .section-tab {
+            background: #ecf0f1;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+
+        .section-tab:hover {
+            background: #d5dbdb;
+        }
+
+        .section-tab.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .section-tab.completed {
+            background: #27ae60;
+            color: white;
+        }
+
+        .floating-actions {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .floating-btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .floating-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.5);
+        }
+
+        .floating-btn.success {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+        }
+
+        .floating-btn.success:hover {
+            box-shadow: 0 8px 25px rgba(39, 174, 96, 0.5);
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+                height: auto;
+            }
+            
+            .collaborative-indicators {
+                position: relative;
+                bottom: auto;
+                right: auto;
+                margin-top: 20px;
+            }
+            
+            .floating-actions {
+                position: relative;
+                bottom: auto;
+                left: auto;
+                transform: none;
+                justify-content: center;
+                margin-top: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="interface-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📊 Market Research Report Generation</h1>
+            <div class="header-controls">
+                <button class="btn" onclick="saveReport()">💾 Save Draft</button>
+                <button class="btn warning" onclick="previewReport()">👁️ Preview</button>
+                <button class="btn success" onclick="publishReport()">🚀 Publish</button>
+            </div>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Left Sidebar - Section Progress -->
+            <div class="sidebar">
+                <div class="section-progress">
+                    <h2>📋 Section Progress</h2>
+                    
+                    <div class="progress-item completed" data-section="defense_military_news">
+                        <div class="progress-icon completed">✓</div>
+                        <div class="progress-details">
+                            <div class="progress-title">Defense & Military News</div>
+                            <div class="progress-subtitle">3 verified sources</div>
+                            <div class="progress-agents">TrendTracker, Engineer, Sales</div>
+                        </div>
+                    </div>
+
+                    <div class="progress-item completed" data-section="government_solicitations">
+                        <div class="progress-icon completed">✓</div>
+                        <div class="progress-details">
+                            <div class="progress-title">Government Solicitations</div>
+                            <div class="progress-subtitle">5 active opportunities</div>
+                            <div class="progress-agents">TrendTracker, Engineer, Sales</div>
+                        </div>
+                    </div>
+
+                    <div class="progress-item in-progress" data-section="technology_advances">
+                        <div class="progress-icon in-progress">⚡</div>
+                        <div class="progress-details">
+                            <div class="progress-title">Technology Advances</div>
+                            <div class="progress-subtitle">Verifying sources...</div>
+                            <div class="progress-agents">Engineer, TrendTracker</div>
+                        </div>
+                    </div>
+
+                    <div class="progress-item pending" data-section="competitor_updates">
+                        <div class="progress-icon pending">⏳</div>
+                        <div class="progress-details">
+                            <div class="progress-title">Competitor Updates</div>
+                            <div class="progress-subtitle">Awaiting analysis</div>
+                            <div class="progress-agents">RivalWatcher, Engineer</div>
+                        </div>
+                    </div>
+
+                    <div class="progress-item pending" data-section="contract_awards">
+                        <div class="progress-icon pending">⏳</div>
+                        <div class="progress-details">
+                            <div class="progress-title">Contract Awards</div>
+                            <div class="progress-subtitle">Queued</div>
+                            <div class="progress-agents">TrendTracker, Sales</div>
+                        </div>
+                    </div>
+
+                    <div class="progress-item pending" data-section="vehicle_power_developments">
+                        <div class="progress-icon pending">⏳</div>
+                        <div class="progress-details">
+                            <div class="progress-title">Vehicle Power Developments</div>
+                            <div class="progress-subtitle">Queued</div>
+                            <div class="progress-agents">Engineer, TrendTracker</div>
+                        </div>
+                    </div>
+
+                    <div class="progress-item pending" data-section="startup_watch">
+                        <div class="progress-icon pending">⏳</div>
+                        <div class="progress-details">
+                            <div class="progress-title">Startup Watch</div>
+                            <div class="progress-subtitle">Queued</div>
+                            <div class="progress-agents">RivalWatcher, Engineer</div>
+                        </div>
+                    </div>
+
+                    <div class="progress-item pending" data-section="commercial_opportunities">
+                        <div class="progress-icon pending">⏳</div>
+                        <div class="progress-details">
+                            <div class="progress-title">Commercial Opportunities</div>
+                            <div class="progress-subtitle">Queued</div>
+                            <div class="progress-agents">Sales, Engineer</div>
+                        </div>
+                    </div>
+
+                    <div class="progress-item pending" data-section="key_takeaways">
+                        <div class="progress-icon pending">⏳</div>
+                        <div class="progress-details">
+                            <div class="progress-title">Key Takeaways</div>
+                            <div class="progress-subtitle">Final synthesis</div>
+                            <div class="progress-agents">Sales, Engineer, TrendTracker</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center - Report Editor -->
+            <div class="content-area">
+                <div class="report-editor">
+                    <div class="editor-toolbar">
+                        <h2>📝 Collaborative Report Editor</h2>
+                        <div class="toolbar-controls">
+                            <button class="toolbar-btn active" onclick="setViewMode('edit')">Edit</button>
+                            <button class="toolbar-btn" onclick="setViewMode('preview')">Preview</button>
+                            <button class="toolbar-btn" onclick="setViewMode('compare')">Compare</button>
+                        </div>
+                    </div>
+
+                    <div class="section-tabs" id="sectionTabs">
+                        <button class="section-tab completed" data-section="defense_military_news">Defense News</button>
+                        <button class="section-tab completed" data-section="government_solicitations">Solicitations</button>
+                        <button class="section-tab active" data-section="technology_advances">Tech Advances</button>
+                        <button class="section-tab" data-section="competitor_updates">Competitors</button>
+                        <button class="section-tab" data-section="contract_awards">Awards</button>
+                        <button class="section-tab" data-section="vehicle_power_developments">Vehicle Power</button>
+                        <button class="section-tab" data-section="startup_watch">Startups</button>
+                        <button class="section-tab" data-section="commercial_opportunities">Commercial</button>
+                        <button class="section-tab" data-section="key_takeaways">Takeaways</button>
+                    </div>
+
+                    <div class="editor-content" id="editorContent" contenteditable="true">
+## Technology & Power Electronics Advances
+
+**Purpose:** Highlight 2–3 recent technical developments (e.g., SiC, GaN, thermal solutions). Include source, valid link, and explain impact on Calnetix technologies.
+
+| Development | Source & Date | Potential Impact |
+|-------------|---------------|------------------|
+| New SiC MOSFET breakthrough achieves 99.2% efficiency | [IEEE Spectrum, January 2024](https://spectrum.ieee.org/sic-mosfet-breakthrough) | Could increase Enercycle inverter efficiency by 2-3%, reducing thermal management requirements |
+| GaN-based power modules reach 10kW density milestone | [Power Electronics News, February 2024](https://powerelectronicsnews.com/gan-10kw-milestone) | Enables more compact inverter designs for space-constrained military applications |
+| Advanced thermal interface materials reduce junction temperatures by 15°C | [Electronics Cooling, March 2024](https://electronics-cooling.com/thermal-interface-breakthrough) | Extends component lifespan and enables higher power density in Enercycle systems |
+
+**Agent Contributions:**
+- Engineer: Technical specification verification and impact analysis
+- TrendTracker: Market trend identification and source validation
+- RivalWatcher: Competitive technology assessment
+
+**Verification Status:** ⚠️ 2/3 sources verified, 1 pending
+**Quality Score:** 0.87/1.0
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar - Verification Dashboard -->
+            <div class="verification-panel">
+                <div class="verification-dashboard">
+                    <h2>🔍 Source Verification</h2>
+                    
+                    <div class="verification-summary">
+                        <div class="verification-score">92%</div>
+                        <div class="verification-label">Overall Reliability</div>
+                    </div>
+
+                    <div class="source-list">
+                        <h3>Active Sources (15)</h3>
+                        
+                        <div class="source-item verified">
+                            <div class="source-status verified"></div>
+                            <div class="source-details">
+                                <a href="#" class="source-url">army.mil/modernization</a>
+                                <div class="source-reliability">Reliability: 98% • Government</div>
+                            </div>
+                        </div>
+
+                        <div class="source-item verified">
+                            <div class="source-status verified"></div>
+                            <div class="source-details">
+                                <a href="#" class="source-url">defensenews.com/contract-award</a>
+                                <div class="source-reliability">Reliability: 92% • Defense Media</div>
+                            </div>
+                        </div>
+
+                        <div class="source-item pending">
+                            <div class="source-status pending"></div>
+                            <div class="source-details">
+                                <a href="#" class="source-url">ieee.org/spectrum/article</a>
+                                <div class="source-reliability">Verifying... • Technical</div>
+                            </div>
+                        </div>
+
+                        <div class="source-item verified">
+                            <div class="source-status verified"></div>
+                            <div class="source-details">
+                                <a href="#" class="source-url">darpa.mil/news-events</a>
+                                <div class="source-reliability">Reliability: 98% • Government</div>
+                            </div>
+                        </div>
+
+                        <div class="source-item failed">
+                            <div class="source-status failed"></div>
+                            <div class="source-details">
+                                <a href="#" class="source-url">example-broken-link.com</a>
+                                <div class="source-reliability">Link broken • Needs replacement</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="quality-metrics">
+                        <h3>Quality Metrics</h3>
+                        
+                        <div class="metric-row">
+                            <span class="metric-label">Source Reliability</span>
+                            <span class="metric-value">94%</span>
+                        </div>
+                        <div class="metric-bar">
+                            <div class="metric-fill" style="width: 94%"></div>
+                        </div>
+
+                        <div class="metric-row">
+                            <span class="metric-label">Claim Verification</span>
+                            <span class="metric-value">89%</span>
+                        </div>
+                        <div class="metric-bar">
+                            <div class="metric-fill" style="width: 89%"></div>
+                        </div>
+
+                        <div class="metric-row">
+                            <span class="metric-label">Cross-Reference</span>
+                            <span class="metric-value">91%</span>
+                        </div>
+                        <div class="metric-bar">
+                            <div class="metric-fill" style="width: 91%"></div>
+                        </div>
+
+                        <div class="metric-row">
+                            <span class="metric-label">Content Quality</span>
+                            <span class="metric-value">87%</span>
+                        </div>
+                        <div class="metric-bar">
+                            <div class="metric-fill" style="width: 87%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Collaborative Indicators -->
+        <div class="collaborative-indicators">
+            <h4>👥 Active Collaborators</h4>
+            <div class="agent-indicator">
+                <div class="agent-avatar engineer"></div>
+                <span>Engineer</span>
+                <span class="agent-status">• Reviewing tech specs</span>
+            </div>
+            <div class="agent-indicator">
+                <div class="agent-avatar trend-tracker"></div>
+                <span>TrendTracker</span>
+                <span class="agent-status">• Analyzing sources</span>
+            </div>
+            <div class="agent-indicator">
+                <div class="agent-avatar editor"></div>
+                <span>Editor</span>
+                <span class="agent-status">• Quality review</span>
+            </div>
+        </div>
+
+        <!-- Floating Actions -->
+        <div class="floating-actions">
+            <button class="floating-btn" onclick="regenerateSection()">🔄 Regenerate Section</button>
+            <button class="floating-btn" onclick="verifyAllSources()">✅ Verify All Sources</button>
+            <button class="floating-btn success" onclick="finalizeReport()">🎯 Finalize Report</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSection = 'technology_advances';
+        let viewMode = 'edit';
+
+        // Section content data
+        const sectionContent = {
+            'defense_military_news': `## Defense & Military News Summary
+
+**Purpose:** Provide 2–3 recent news items showing shifts in military strategy, procurement priorities, or modernization goals affecting vehicle power and export power systems.
+
+| Headline / Summary | Impact / Relevance |
+|-------------------|-------------------|
+| Army announces $2.1B modernization program for vehicle power systems | High impact: Direct opportunity for Enercycle inverter integration in next-gen military vehicles |
+| Navy tests bidirectional power systems on new destroyer class | Strategic relevance: Validates our bidirectional inverter technology approach for naval applications |
+| DoD prioritizes energy resilience in 2024 defense strategy | Market opportunity: Increased focus on microgrid and export power capabilities |
+
+**Verification Status:** ✅ All sources verified
+**Quality Score:** 0.94/1.0`,
+
+            'government_solicitations': `## Government & DoD Solicitations
+
+**Purpose:** List active and upcoming solicitations (SBIR/STTR, BAA, RFP) directly supporting the Enercycle inverter family.
+
+| Solicitation | Agency | Deadline | Relevance / Recommended Action |
+|-------------|--------|----------|-------------------------------|
+| SBIR A24-072: Lightweight Bidirectional Inverters | Army | March 15, 2024 | Perfect fit: Directly targets Enercycle capabilities. Recommend Phase I proposal |
+| Navy BAA N00014-24-S-B001: Ship Power Systems | Navy | April 30, 2024 | High relevance: Naval power distribution aligns with our technology |
+| DARPA HR001124S0001: Adaptive Power Electronics | DARPA | May 20, 2024 | Strategic opportunity: Advanced power electronics research funding |
+
+**Verification Status:** ✅ All sources verified
+**Quality Score:** 0.91/1.0`,
+
+            'technology_advances': `## Technology & Power Electronics Advances
+
+**Purpose:** Highlight 2–3 recent technical developments (e.g., SiC, GaN, thermal solutions). Include source, valid link, and explain impact on Calnetix technologies.
+
+| Development | Source & Date | Potential Impact |
+|-------------|---------------|------------------|
+| New SiC MOSFET breakthrough achieves 99.2% efficiency | [IEEE Spectrum, January 2024](https://spectrum.ieee.org/sic-mosfet-breakthrough) | Could increase Enercycle inverter efficiency by 2-3%, reducing thermal management requirements |
+| GaN-based power modules reach 10kW density milestone | [Power Electronics News, February 2024](https://powerelectronicsnews.com/gan-10kw-milestone) | Enables more compact inverter designs for space-constrained military applications |
+| Advanced thermal interface materials reduce junction temperatures by 15°C | [Electronics Cooling, March 2024](https://electronics-cooling.com/thermal-interface-breakthrough) | Extends component lifespan and enables higher power density in Enercycle systems |
+
+**Agent Contributions:**
+- Engineer: Technical specification verification and impact analysis
+- TrendTracker: Market trend identification and source validation
+- RivalWatcher: Competitive technology assessment
+
+**Verification Status:** ⚠️ 2/3 sources verified, 1 pending
+**Quality Score:** 0.87/1.0`,
+
+            'competitor_updates': `## Defense Contractor & Startup Updates
+
+**Purpose:** Track competitor and potential partner activities in vehicle electrification and export power.
+
+| Company | Update (with link) | Strategic Takeaway |
+|---------|-------------------|-------------------|
+| Aegis Power Systems | New 50kW bidirectional inverter announced for military vehicles | Direct competitor: Similar power rating to Enercycle, focus on ruggedization |
+| BAE Systems | Partnership with startup for next-gen power systems | Potential collaboration opportunity: BAE seeking power electronics partners |
+| RTX Collins Aerospace | $15M contract for aircraft power distribution | Market validation: Growing demand for advanced power systems |
+
+**Verification Status:** ✅ All sources verified
+**Quality Score:** 0.89/1.0`,
+
+            'key_takeaways': `## Key Takeaways & Recommendations
+
+**Purpose:** Provide 3–5 bullet points summarizing the most critical strategic actions, risks, or opportunities.
+
+• **Strategic Action:** Focus on Army SBIR A24-072 opportunity - perfect alignment with Enercycle capabilities
+• **Market Opportunity:** $2.1B Army modernization program creates significant revenue potential for power systems
+• **Technical Advantage:** New SiC/GaN developments could enhance Enercycle efficiency and competitiveness
+• **Partnership Strategy:** Consider collaboration with BAE Systems given their active partner search
+• **Risk Mitigation:** Monitor Aegis Power Systems competitive developments in similar power ratings
+
+**Verification Status:** ✅ All recommendations based on verified data
+**Quality Score:** 0.92/1.0`
+        };
+
+        // Initialize the interface
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSectionTabs();
+            initializeProgressTracking();
+            simulateRealTimeUpdates();
+        });
+
+        function initializeSectionTabs() {
+            const tabs = document.querySelectorAll('.section-tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => switchSection(tab.dataset.section));
+            });
+        }
+
+        function switchSection(sectionName) {
+            currentSection = sectionName;
+            
+            // Update tab appearance
+            document.querySelectorAll('.section-tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.section === sectionName) {
+                    tab.classList.add('active');
+                }
+            });
+            
+            // Update editor content
+            const editorContent = document.getElementById('editorContent');
+            if (sectionContent[sectionName]) {
+                editorContent.textContent = sectionContent[sectionName];
+            } else {
+                editorContent.textContent = `## ${sectionName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+
+**Purpose:** [Section purpose will be loaded here]
+
+[Content being generated by collaborative agents...]
+
+**Agent Contributions:**
+- [Agents working on this section]
+
+**Verification Status:** ⏳ Pending
+**Quality Score:** --/1.0`;
+            }
+            
+            // Update progress item highlighting
+            document.querySelectorAll('.progress-item').forEach(item => {
+                item.style.backgroundColor = '';
+                if (item.dataset.section === sectionName) {
+                    item.style.backgroundColor = 'rgba(52, 152, 219, 0.1)';
+                }
+            });
+        }
+
+        function initializeProgressTracking() {
+            const progressItems = document.querySelectorAll('.progress-item');
+            progressItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const sectionName = item.dataset.section;
+                    switchSection(sectionName);
+                });
+            });
+        }
+
+        function simulateRealTimeUpdates() {
+            // Simulate verification status updates
+            setInterval(() => {
+                updateVerificationStatus();
+            }, 5000);
+            
+            // Simulate quality metric updates
+            setInterval(() => {
+                updateQualityMetrics();
+            }, 8000);
+            
+            // Simulate collaborative indicators
+            setInterval(() => {
+                updateCollaborativeIndicators();
+            }, 3000);
+        }
+
+        function updateVerificationStatus() {
+            const sourceItems = document.querySelectorAll('.source-item.pending');
+            if (sourceItems.length > 0) {
+                const randomItem = sourceItems[Math.floor(Math.random() * sourceItems.length)];
+                if (Math.random() > 0.7) {
+                    randomItem.classList.remove('pending');
+                    randomItem.classList.add('verified');
+                    randomItem.querySelector('.source-status').classList.remove('pending');
+                    randomItem.querySelector('.source-status').classList.add('verified');
+                    randomItem.querySelector('.source-reliability').textContent = 'Reliability: ' + (85 + Math.floor(Math.random() * 10)) + '% • Verified';
+                }
+            }
+        }
+
+        function updateQualityMetrics() {
+            const metricValues = document.querySelectorAll('.metric-value');
+            metricValues.forEach(metric => {
+                if (metric.textContent.includes('%')) {
+                    const currentValue = parseInt(metric.textContent);
+                    const newValue = Math.max(85, Math.min(98, currentValue + (Math.random() - 0.5) * 2));
+                    metric.textContent = Math.round(newValue) + '%';
+                    
+                    // Update corresponding progress bar
+                    const metricBar = metric.parentElement.nextElementSibling;
+                    if (metricBar && metricBar.classList.contains('metric-bar')) {
+                        const fill = metricBar.querySelector('.metric-fill');
+                        fill.style.width = Math.round(newValue) + '%';
+                    }
+                }
+            });
+        }
+
+        function updateCollaborativeIndicators() {
+            const indicators = document.querySelectorAll('.agent-status');
+            const statuses = [
+                '• Analyzing data...',
+                '• Verifying sources...',
+                '• Writing content...',
+                '• Quality review...',
+                '• Cross-referencing...',
+                '• Finalizing section...'
+            ];
+            
+            indicators.forEach(indicator => {
+                if (Math.random() > 0.8) {
+                    const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+                    indicator.textContent = randomStatus;
+                }
+            });
+        }
+
+        // Toolbar functions
+        function setViewMode(mode) {
+            viewMode = mode;
+            
+            // Update toolbar buttons
+            document.querySelectorAll('.toolbar-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            const editorContent = document.getElementById('editorContent');
+            
+            if (mode === 'preview') {
+                editorContent.contentEditable = 'false';
+                editorContent.style.fontFamily = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+                editorContent.style.whiteSpace = 'normal';
+            } else if (mode === 'edit') {
+                editorContent.contentEditable = 'true';
+                editorContent.style.fontFamily = "'Courier New', monospace";
+                editorContent.style.whiteSpace = 'pre-wrap';
+            } else if (mode === 'compare') {
+                // Show comparison view (simplified)
+                editorContent.style.backgroundColor = '#f8f9fa';
+                editorContent.contentEditable = 'false';
+            }
+        }
+
+        // Header control functions
+        function saveReport() {
+            // Simulate save operation
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = '💾 Saving...';
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                btn.textContent = '✅ Saved';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                }, 1000);
+            }, 2000);
+        }
+
+        function previewReport() {
+            // Open preview in new window/tab
+            window.open('/report_preview.html', '_blank');
+        }
+
+        function publishReport() {
+            if (confirm('Are you sure you want to publish this report? This will make it available to all stakeholders.')) {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '🚀 Publishing...';
+                btn.disabled = true;
+                
+                setTimeout(() => {
+                    btn.textContent = '✅ Published';
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.disabled = false;
+                    }, 2000);
+                }, 3000);
+            }
+        }
+
+        // Floating action functions
+        function regenerateSection() {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = '🔄 Regenerating...';
+            btn.disabled = true;
+            
+            // Simulate section regeneration
+            setTimeout(() => {
+                // Update current section status to in-progress
+                const currentProgressItem = document.querySelector(`[data-section="${currentSection}"]`);
+                if (currentProgressItem) {
+                    currentProgressItem.classList.remove('completed', 'pending');
+                    currentProgressItem.classList.add('in-progress');
+                    currentProgressItem.querySelector('.progress-icon').className = 'progress-icon in-progress';
+                    currentProgressItem.querySelector('.progress-icon').textContent = '⚡';
+                    currentProgressItem.querySelector('.progress-subtitle').textContent = 'Regenerating content...';
+                }
+                
+                setTimeout(() => {
+                    btn.textContent = '✅ Regenerated';
+                    
+                    // Mark as completed
+                    if (currentProgressItem) {
+                        currentProgressItem.classList.remove('in-progress');
+                        currentProgressItem.classList.add('completed');
+                        currentProgressItem.querySelector('.progress-icon').className = 'progress-icon completed';
+                        currentProgressItem.querySelector('.progress-icon').textContent = '✓';
+                        currentProgressItem.querySelector('.progress-subtitle').textContent = 'Content updated';
+                    }
+                    
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.disabled = false;
+                    }, 1000);
+                }, 3000);
+            }, 1000);
+        }
+
+        function verifyAllSources() {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = '✅ Verifying...';
+            btn.disabled = true;
+            
+            // Simulate source verification
+            setTimeout(() => {
+                // Update all pending sources to verified
+                const pendingSources = document.querySelectorAll('.source-item.pending');
+                pendingSources.forEach(source => {
+                    source.classList.remove('pending');
+                    source.classList.add('verified');
+                    source.querySelector('.source-status').classList.remove('pending');
+                    source.querySelector('.source-status').classList.add('verified');
+                    source.querySelector('.source-reliability').textContent = 'Reliability: ' + (90 + Math.floor(Math.random() * 8)) + '% • Verified';
+                });
+                
+                // Update overall reliability score
+                document.querySelector('.verification-score').textContent = '96%';
+                
+                btn.textContent = '✅ All Verified';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                }, 2000);
+            }, 4000);
+        }
+
+        function finalizeReport() {
+            if (confirm('Are you sure you want to finalize this report? This will lock all sections and prepare for final review.')) {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '🎯 Finalizing...';
+                btn.disabled = true;
+                
+                // Mark all sections as completed
+                setTimeout(() => {
+                    document.querySelectorAll('.progress-item').forEach(item => {
+                        item.classList.remove('pending', 'in-progress');
+                        item.classList.add('completed');
+                        item.querySelector('.progress-icon').className = 'progress-icon completed';
+                        item.querySelector('.progress-icon').textContent = '✓';
+                    });
+                    
+                    // Update section tabs
+                    document.querySelectorAll('.section-tab').forEach(tab => {
+                        tab.classList.add('completed');
+                    });
+                    
+                    btn.textContent = '✅ Finalized';
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.disabled = false;
+                    }, 2000);
+                }, 3000);
+            }
+        }
+    </script>
+</body>
+</html>

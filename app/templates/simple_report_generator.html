@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAL Report Generator</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 1.8em;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background: #005a9e;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn.secondary {
+            background: #6c757d;
+        }
+
+        .btn.secondary:hover {
+            background: #545b62;
+        }
+
+        .btn.success {
+            background: #28a745;
+        }
+
+        .btn.success:hover {
+            background: #1e7e34;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+        }
+
+        .sidebar {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            height: fit-content;
+        }
+
+        .sidebar h3 {
+            color: #333;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+
+        .report-list {
+            list-style: none;
+        }
+
+        .report-item {
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .report-item:hover {
+            background: #f8f9fa;
+        }
+
+        .report-item.active {
+            background: #e3f2fd;
+            border-color: #007acc;
+        }
+
+        .report-title {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .report-meta {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .content-area {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .generation-form {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .report-display {
+            display: none;
+        }
+
+        .report-display.active {
+            display: block;
+        }
+
+        .report-header {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .report-title-display {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .report-meta-display {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .sections-container {
+            margin-top: 20px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+
+        .section-header {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+
+        .section-title {
+            font-weight: 500;
+            color: #333;
+            flex: 1;
+        }
+
+        .section-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .section-btn {
+            background: none;
+            border: 1px solid #ddd;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .section-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .section-content {
+            padding: 15px;
+        }
+
+        .section-content.editing {
+            padding: 0;
+        }
+
+        .section-editor {
+            width: 100%;
+            min-height: 200px;
+            border: none;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            resize: vertical;
+        }
+
+        .section-editor:focus {
+            outline: none;
+        }
+
+        .feedback-form {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .feedback-form.active {
+            display: block;
+        }
+
+        .feedback-form textarea {
+            width: 100%;
+            min-height: 60px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 8px;
+        }
+
+        .feedback-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .status-draft {
+            background: #ffc107;
+        }
+
+        .status-completed {
+            background: #28a745;
+        }
+
+        .status-needs-revision {
+            background: #dc3545;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                order: 2;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+            }
+            
+            .header-actions {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Report Generator</h1>
+            <div class="header-actions">
+                <button class="btn secondary" onclick="saveReport()" id="saveBtn">💾 Save</button>
+                <button class="btn" onclick="exportReport()" id="exportBtn">📄 Export</button>
+                <button class="btn success" onclick="emailReport()" id="emailBtn">📧 Email</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <h3>📋 My Reports</h3>
+                <ul class="report-list" id="reportList">
+                    <li class="empty-state">
+                        <p>No reports yet</p>
+                    </li>
+                </ul>
+                <button class="btn" onclick="showNewReportForm()" style="width: 100%; margin-top: 15px;">
+                    ➕ New Report
+                </button>
+            </div>
+
+            <div class="content-area">
+                <!-- New Report Form -->
+                <div class="generation-form" id="generationForm">
+                    <h3>Generate New Report</h3>
+                    <form id="reportForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="reportTitle">Report Title *</label>
+                                <input type="text" id="reportTitle" name="title" placeholder="e.g., Market Research Report - Q1 2024" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="userId">User ID *</label>
+                                <input type="text" id="userId" name="user_id" placeholder="Your user ID" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="reportDescription">Description / Requirements</label>
+                            <textarea id="reportDescription" name="description" placeholder="Describe what you want in this report..."></textarea>
+                        </div>
+                        <button type="submit" class="btn" id="generateBtn">🚀 Generate Report</button>
+                    </form>
+                </div>
+
+                <!-- Report Display -->
+                <div class="report-display" id="reportDisplay">
+                    <div class="report-header">
+                        <div class="report-title-display" id="reportTitleDisplay"></div>
+                        <div class="report-meta-display" id="reportMetaDisplay"></div>
+                    </div>
+
+                    <div class="sections-container" id="sectionsContainer">
+                        <!-- Sections will be dynamically loaded here -->
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div class="loading" id="loadingState" style="display: none;">
+                    <p>🤖 Generating report with AI agents...</p>
+                    <p style="font-size: 14px; margin-top: 10px;">This may take a few moments</p>
+                </div>
+
+                <!-- Empty State -->
+                <div class="empty-state" id="emptyState">
+                    <h3>Welcome to Report Generator</h3>
+                    <p>Create a new report to get started</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentReport = null;
+        let reports = [];
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            loadReports();
+            loadUserIdFromStorage();
+        });
+
+        // Load user ID from localStorage
+        function loadUserIdFromStorage() {
+            const savedUserId = localStorage.getItem('cal_user_id');
+            if (savedUserId) {
+                document.getElementById('userId').value = savedUserId;
+            }
+        }
+
+        // Save user ID to localStorage
+        function saveUserIdToStorage() {
+            const userId = document.getElementById('userId').value;
+            if (userId) {
+                localStorage.setItem('cal_user_id', userId);
+            }
+        }
+
+        // Show new report form
+        function showNewReportForm() {
+            document.getElementById('generationForm').style.display = 'block';
+            document.getElementById('reportDisplay').classList.remove('active');
+            document.getElementById('emptyState').style.display = 'none';
+            currentReport = null;
+            
+            // Clear active report selection
+            document.querySelectorAll('.report-item').forEach(item => {
+                item.classList.remove('active');
+            });
+        }
+
+        // Handle report form submission
+        document.getElementById('reportForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const reportData = {
+                title: formData.get('title'),
+                description: formData.get('description'),
+                user_id: formData.get('user_id')
+            };
+
+            // Save user ID
+            saveUserIdToStorage();
+
+            // Show loading state
+            document.getElementById('generationForm').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('loadingState').style.display = 'block';
+
+            try {
+                const response = await fetch('/reports/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(reportData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    currentReport = result.report;
+                    displayReport(currentReport);
+                    loadReports(); // Refresh the reports list
+                } else {
+                    alert('Error generating report: ' + result.message);
+                    showNewReportForm();
+                }
+            } catch (error) {
+                console.error('Error generating report:', error);
+                alert('Error generating report. Please try again.');
+                showNewReportForm();
+            } finally {
+                document.getElementById('loadingState').style.display = 'none';
+            }
+        });
+
+        // Load reports from server
+        async function loadReports() {
+            try {
+                const userId = document.getElementById('userId').value || localStorage.getItem('cal_user_id');
+                const url = userId ? `/reports?user_id=${userId}` : '/reports';
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                reports = data;
+                displayReportsList();
+            } catch (error) {
+                console.error('Error loading reports:', error);
+            }
+        }
+
+        // Display reports list in sidebar
+        function displayReportsList() {
+            const reportList = document.getElementById('reportList');
+            
+            if (reports.length === 0) {
+                reportList.innerHTML = '<li class="empty-state"><p>No reports yet</p></li>';
+                return;
+            }
+
+            reportList.innerHTML = reports.map(report => `
+                <li class="report-item" onclick="loadReport('${report.report_id}')">
+                    <div class="report-title">${report.title}</div>
+                    <div class="report-meta">
+                        <span class="status-indicator status-${report.status}"></span>
+                        ${report.status} • ${formatDate(report.updated_at)}
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        // Load a specific report
+        async function loadReport(reportId) {
+            try {
+                const response = await fetch(`/reports/${reportId}`);
+                const report = await response.json();
+                
+                if (report) {
+                    currentReport = report;
+                    displayReport(report);
+                    
+                    // Update active state
+                    document.querySelectorAll('.report-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    event.target.closest('.report-item').classList.add('active');
+                }
+            } catch (error) {
+                console.error('Error loading report:', error);
+                alert('Error loading report');
+            }
+        }
+
+        // Display report content
+        function displayReport(report) {
+            document.getElementById('generationForm').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('reportDisplay').classList.add('active');
+
+            // Update report header
+            document.getElementById('reportTitleDisplay').textContent = report.title;
+            document.getElementById('reportMetaDisplay').innerHTML = `
+                Status: <span class="status-indicator status-${report.status}"></span>${report.status} • 
+                Updated: ${formatDate(report.updated_at)} • 
+                Sections: ${report.sections ? report.sections.length : 0}
+            `;
+
+            // Display sections
+            const sectionsContainer = document.getElementById('sectionsContainer');
+            if (report.sections && report.sections.length > 0) {
+                sectionsContainer.innerHTML = report.sections.map(section => `
+                    <div class="section" data-section-id="${section.section_id}">
+                        <div class="section-header">
+                            <div class="section-title">
+                                <span class="status-indicator status-${section.status}"></span>
+                                ${section.title}
+                            </div>
+                            <div class="section-actions">
+                                <button class="section-btn" onclick="editSection('${section.section_id}')">✏️ Edit</button>
+                                <button class="section-btn" onclick="showFeedbackForm('${section.section_id}')">🔄 Revise</button>
+                            </div>
+                        </div>
+                        <div class="section-content" id="content-${section.section_id}">
+                            ${formatMarkdown(section.content)}
+                        </div>
+                        <div class="feedback-form" id="feedback-${section.section_id}">
+                            <textarea placeholder="Provide feedback for improving this section..."></textarea>
+                            <div class="feedback-actions">
+                                <button class="btn" onclick="submitSectionFeedback('${section.section_id}')">Apply Feedback</button>
+                                <button class="btn secondary" onclick="hideFeedbackForm('${section.section_id}')">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                sectionsContainer.innerHTML = '<div class="empty-state"><p>No sections generated yet</p></div>';
+            }
+        }
+
+        // Edit section
+        function editSection(sectionId) {
+            const section = currentReport.sections.find(s => s.section_id === sectionId);
+            if (!section) return;
+
+            const contentDiv = document.getElementById(`content-${sectionId}`);
+            contentDiv.classList.add('editing');
+            contentDiv.innerHTML = `
+                <textarea class="section-editor" id="editor-${sectionId}">${section.content}</textarea>
+                <div style="padding: 10px; border-top: 1px solid #eee; background: #f8f9fa;">
+                    <button class="btn" onclick="saveSection('${sectionId}')">💾 Save</button>
+                    <button class="btn secondary" onclick="cancelEdit('${sectionId}')">Cancel</button>
+                </div>
+            `;
+        }
+
+        // Save section
+        async function saveSection(sectionId) {
+            const editor = document.getElementById(`editor-${sectionId}`);
+            const content = editor.value;
+
+            try {
+                const response = await fetch(`/reports/${currentReport.report_id}/sections/${sectionId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        content: content,
+                        status: 'completed'
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Update local data
+                    const section = currentReport.sections.find(s => s.section_id === sectionId);
+                    section.content = content;
+                    section.status = 'completed';
+
+                    // Refresh display
+                    displayReport(currentReport);
+                } else {
+                    alert('Error saving section: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error saving section:', error);
+                alert('Error saving section');
+            }
+        }
+
+        // Cancel edit
+        function cancelEdit(sectionId) {
+            displayReport(currentReport);
+        }
+
+        // Show feedback form
+        function showFeedbackForm(sectionId) {
+            document.getElementById(`feedback-${sectionId}`).classList.add('active');
+        }
+
+        // Hide feedback form
+        function hideFeedbackForm(sectionId) {
+            document.getElementById(`feedback-${sectionId}`).classList.remove('active');
+        }
+
+        // Submit section feedback
+        async function submitSectionFeedback(sectionId) {
+            const feedbackTextarea = document.querySelector(`#feedback-${sectionId} textarea`);
+            const feedback = feedbackTextarea.value.trim();
+
+            if (!feedback) {
+                alert('Please provide feedback');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/reports/${currentReport.report_id}/sections/${sectionId}/revise`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        section_id: sectionId,
+                        feedback: feedback,
+                        user_id: currentReport.user_id
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Update local data
+                    const section = currentReport.sections.find(s => s.section_id === sectionId);
+                    section.content = result.updated_content;
+                    section.status = 'completed';
+
+                    // Refresh display
+                    displayReport(currentReport);
+                    alert('Section updated based on feedback');
+                } else {
+                    alert('Error applying feedback: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error applying feedback:', error);
+                alert('Error applying feedback');
+            }
+        }
+
+        // Save report
+        async function saveReport() {
+            if (!currentReport) {
+                alert('No report to save');
+                return;
+            }
+
+            const btn = document.getElementById('saveBtn');
+            const originalText = btn.textContent;
+            btn.textContent = '💾 Saving...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`/reports/${currentReport.report_id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        status: 'completed'
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    btn.textContent = '✅ Saved';
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.disabled = false;
+                    }, 2000);
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                console.error('Error saving report:', error);
+                alert('Error saving report');
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // Export report
+        function exportReport() {
+            if (!currentReport) {
+                alert('No report to export');
+                return;
+            }
+
+            // Create a simple text export
+            let exportContent = `# ${currentReport.title}\n\n`;
+            exportContent += `Generated: ${formatDate(currentReport.created_at)}\n`;
+            exportContent += `Status: ${currentReport.status}\n\n`;
+
+            if (currentReport.description) {
+                exportContent += `## Description\n${currentReport.description}\n\n`;
+            }
+
+            if (currentReport.sections) {
+                currentReport.sections.forEach(section => {
+                    exportContent += `## ${section.title}\n\n`;
+                    exportContent += `${section.content}\n\n`;
+                });
+            }
+
+            // Download as text file
+            const blob = new Blob([exportContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentReport.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Email report
+        function emailReport() {
+            if (!currentReport) {
+                alert('No report to email');
+                return;
+            }
+
+            const email = prompt('Enter email address:');
+            if (!email) return;
+
+            const btn = document.getElementById('emailBtn');
+            const originalText = btn.textContent;
+            btn.textContent = '📧 Sending...';
+            btn.disabled = true;
+
+            // Simulate email sending (you would implement actual email functionality)
+            setTimeout(() => {
+                alert(`Report would be sent to ${email}`);
+                btn.textContent = '✅ Sent';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                }, 2000);
+            }, 2000);
+        }
+
+        // Utility functions
+        function formatDate(dateString) {
+            if (!dateString) return 'Unknown';
+            
+            let date;
+            if (dateString._seconds) {
+                date = new Date(dateString._seconds * 1000);
+            } else {
+                date = new Date(dateString);
+            }
+            
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+
+        function formatMarkdown(content) {
+            // Use Marked.js for proper markdown rendering with DOMPurify for security
+            try {
+                const rawHtml = marked.parse(content);
+                return DOMPurify.sanitize(rawHtml);
+            } catch (error) {
+                console.error('Error parsing markdown:', error);
+                // Fallback to simple text with line breaks
+                return content.replace(/\n/g, '<br>');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,6 +1,8 @@
 from enum import Enum
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional, Union, Any
+from datetime import datetime
+
 
 class AgentModel(BaseModel):
     agent: str
@@ -22,11 +24,12 @@ class Provider(str, Enum):  # Enum for provider
 
 class AgentCallModel(BaseModel):
     provider: Provider
-    model: int 
+    model: int
     response: str = Field(..., min_length=1)
     additional_context: Optional[str] = None
     topic_id: Optional[str] = None
     user_id: str
+
 
 class ProMentorAgentResponse(BaseModel):
     book_titles: str
@@ -65,6 +68,7 @@ class MasterAgentModel(BaseModel):
         ..., description="Tasks routed to individual agents."
     )
 
+
 class UpdateAgentRequest(BaseModel):
     api_route: str = None
     description: str = None
@@ -72,3 +76,59 @@ class UpdateAgentRequest(BaseModel):
     last_updated: str = None
     role: str = None
     agent_schema: str = None
+
+
+class FeedbackModel(BaseModel):
+    feedback_text: str = Field(..., description="The feedback content from your boss")
+    category: str = Field(..., description="Category of feedback (e.g., presentation_skills, technical_accuracy)")
+    user_id: str = Field(..., description="User ID who received the feedback")
+    source: Optional[str] = Field(default="boss_feedback", description="Source of the feedback")
+    context: Optional[str] = Field(default=None, description="Context where feedback was given (e.g., Army presentation)")
+    agent_name: Optional[str] = Field(default=None, description="Specific agent this feedback applies to")
+    topic_id: Optional[str] = Field(default=None, description="Topic ID if related to a specific conversation")
+    rating: Optional[int] = Field(default=None, description="Optional rating from 1-5")
+
+
+class FeedbackResponse(BaseModel):
+    success: bool
+    message: str
+    feedback_id: Optional[str] = None
+
+
+class ReportSection(BaseModel):
+    section_id: str = Field(..., description="Unique identifier for the section")
+    title: str = Field(..., description="Section title")
+    content: str = Field(..., description="Section content in markdown")
+    status: str = Field(default="draft", description="Section status: draft, completed, needs_revision")
+    agent_contributors: List[str] = Field(default_factory=list, description="Agents that contributed to this section")
+    last_updated: Optional[datetime] = Field(default=None, description="Last update timestamp")
+
+
+class ReportModel(BaseModel):
+    title: str = Field(..., description="Report title")
+    description: Optional[str] = Field(default=None, description="Report description")
+    user_id: str = Field(..., description="User who created the report")
+    sections: List[ReportSection] = Field(default_factory=list, description="Report sections")
+    status: str = Field(default="draft", description="Report status: draft, completed, published")
+    created_at: Optional[datetime] = Field(default=None, description="Creation timestamp")
+    updated_at: Optional[datetime] = Field(default=None, description="Last update timestamp")
+
+
+class ReportGenerationRequest(BaseModel):
+    title: str = Field(..., description="Report title")
+    description: Optional[str] = Field(default=None, description="Report description or requirements")
+    user_id: str = Field(..., description="User ID")
+    sections_to_generate: List[str] = Field(default_factory=list, description="Specific sections to generate")
+
+
+class ReportResponse(BaseModel):
+    success: bool
+    message: str
+    report_id: Optional[str] = None
+    report: Optional[ReportModel] = None
+
+
+class SectionUpdateRequest(BaseModel):
+    section_id: str = Field(..., description="Section ID to update")
+    feedback: str = Field(..., description="Feedback for section improvement")
+    user_id: str = Field(..., description="User ID")

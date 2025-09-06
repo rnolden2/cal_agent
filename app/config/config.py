@@ -1,4 +1,5 @@
 import orjson
+import os
 from openai import OpenAI
 from google import genai
 from ..models.model_list import openai_models, google_models, perplexity_models
@@ -8,6 +9,9 @@ import httpx
 
 
 def get_secret(secret):
+    # credential_path = "app/config/api-project.json"
+    # Set the environment variable for authentication
+    
     client = secretmanager.SecretManagerServiceClient()
     project_id = "api-project-371618"
     secret_id = secret

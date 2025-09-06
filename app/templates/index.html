@@ -328,6 +328,10 @@
     <div class="nav-item" data-target="history">History</div>
     <div class="nav-item" data-target="settings">Settings</div>
     <div class="nav-item" data-target="agents">Agents</div>
+    <div class="nav-item" onclick="window.location.href='/workflow-dashboard'">Workflow Dashboard</div>
+    <div class="nav-item" onclick="window.location.href='/simple-report-generator'">Report Generator</div>
+    <div class="nav-item" onclick="window.location.href='/feedback-display'">Feedback Intelligence</div>
+    <div class="nav-item" onclick="window.location.href='/feedback-input'">Submit Feedback</div>
     <div class="nav-item" onclick="window.location.href='/market-research'">Market Research</div>
   </div>
   <div class="main">
@@ -342,29 +346,37 @@
         <textarea placeholder="Enter your prompt here..."></textarea>
         <div class="prompt-footer">
           <div class="select-group">
-            <label for="agentSelect">Agent:</label>
-            <select id="agentSelect">
-              <option value="MASTER_AGENT" selected>Master</option>
-              <option value="CUSTOMER_CONNECT">CustomerConnect</option>
-              <option value="DOCUMENT_MASTER">DocumentMaster</option>
-              <option value="EDITOR">Editor</option>
-              <option value="ENGINEER">Engineer</option>
-              <option value="PROFESSIONAL_MENTOR">ProfessionalMentor</option>
-              <option value="RIVAL_WATCHER">RivalWatcher</option>
-              <option value="SALES">Sales</option>
-              <option value="TECHNICAL_WIZARD">TechnicalWizard</option>
-              <option value="TREND_TRACKER">TrendTracker</option>
+            <label for="taskTypeSelect">Task Type:</label>
+            <select id="taskTypeSelect">
+              <option value="general">General</option>
+              <option value="market_research">Market Research</option>
+              <option value="competitor_analysis">Competitor Analysis</option>
+              <option value="technical_analysis">Technical Analysis</option>
+              <option value="business_strategy">Business Strategy</option>
+              <option value="customer_communication">Customer Communication</option>
+              <option value="document_creation">Document Creation</option>
+              <option value="professional_development">Professional Development</option>
             </select>
           </div>
           <div class="select-group">
-            <label for="modelSelect">Model:</label>
+            <label for="modelSelect">Provider:</label>
             <select id="modelSelect">
-              <option value="google">Google</option>
               <option value="openai">OpenAI</option>
+              <option value="google">Google</option>
               <option value="perplexity">Perplexity</option>
             </select>
           </div>
-          <button>Submit Prompt</button>
+          <div class="select-group">
+            <label for="verificationToggle">
+              <input type="checkbox" id="verificationToggle" checked> Fact Verification
+            </label>
+          </div>
+          <div class="select-group">
+            <label for="feedbackToggle">
+              <input type="checkbox" id="feedbackToggle" checked> Apply Feedback
+            </label>
+          </div>
+          <button>Submit to Orchestrator</button>
         </div>
       </div>
       <!-- Response Section -->
@@ -374,43 +386,147 @@
     </section>
     <!-- Agents -->
     <section id="agents">
-      <h2>Agents</h2>
+      <h2>Collaborative Agent Network</h2>
+      <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <strong>🤖 Unified Orchestrator:</strong> All agents now work collaboratively through the Agent Orchestrator, 
+        automatically selecting optimal combinations based on task type, applying feedback context, and performing 
+        fact verification for enhanced accuracy and reliability.
+      </div>
       <div class="agents-list">
         <div class="card">
-          <h3>CustomerConnect</h3>
-          <p>Assists in drafting professional email communications.</p>
+          <h3>🎯 TrendTracker</h3>
+          <p><strong>Market Research & Intelligence:</strong> Monitors market trends, government solicitations, and industry programs. 
+          Specializes in fact-verified research with source reliability tracking. Collaborates with Engineer and Sales for comprehensive analysis.</p>
+          <div class="details">
+            <div class="details-field">
+              <label>Capabilities:</label>
+              <div>• Market trend analysis<br>• Government solicitation monitoring<br>• Industry intelligence<br>• Source verification</div>
+            </div>
+            <div class="details-field">
+              <label>Collaborates With:</label>
+              <div>Engineer, RivalWatcher, Sales</div>
+            </div>
+          </div>
         </div>
         <div class="card">
-          <h3>DocumentMaster</h3>
-          <p>Retrieves and organizes documents such as technical papers, presentations, and standards.</p>
+          <h3>🔧 Engineer</h3>
+          <p><strong>Technical Analysis & Verification:</strong> Provides deep technical insights, validates specifications, 
+          and ensures technical accuracy. Integrates feedback on technical depth and implementation requirements.</p>
+          <div class="details">
+            <div class="details-field">
+              <label>Capabilities:</label>
+              <div>• Technical specification analysis<br>• Engineering best practices<br>• System design insights<br>• Technical fact verification</div>
+            </div>
+            <div class="details-field">
+              <label>Collaborates With:</label>
+              <div>TrendTracker, TechWiz, Sales</div>
+            </div>
+          </div>
         </div>
         <div class="card">
-          <h3>Editor</h3>
-          <p>Edits all written documentation using a custom format and writing style.</p>
+          <h3>🕵️ RivalWatcher</h3>
+          <p><strong>Competitive Intelligence:</strong> Monitors competitors, analyzes competitive landscape, 
+          and provides strategic insights. Ensures all competitive claims are fact-verified with reliable sources.</p>
+          <div class="details">
+            <div class="details-field">
+              <label>Capabilities:</label>
+              <div>• Competitor monitoring<br>• Competitive analysis<br>• Strategic intelligence<br>• Market positioning</div>
+            </div>
+            <div class="details-field">
+              <label>Collaborates With:</label>
+              <div>TrendTracker, Engineer, Sales</div>
+            </div>
+          </div>
         </div>
         <div class="card">
-          <h3>Engineer</h3>
-          <p>Provides insights into technical terms, equations, and best practices.</p>
+          <h3>💼 Sales</h3>
+          <p><strong>Business Strategy & Opportunities:</strong> Identifies business opportunities, analyzes revenue potential, 
+          and provides strategic recommendations. Applies feedback on business focus and customer needs.</p>
+          <div class="details">
+            <div class="details-field">
+              <label>Capabilities:</label>
+              <div>• Business opportunity analysis<br>• Revenue optimization<br>• Strategic planning<br>• Customer needs assessment</div>
+            </div>
+            <div class="details-field">
+              <label>Collaborates With:</label>
+              <div>TrendTracker, Engineer, RivalWatcher</div>
+            </div>
+          </div>
         </div>
         <div class="card">
-          <h3>ProfessionalMentor</h3>
-          <p>Provides personalized coaching for improving work performance and task prioritization.</p>
+          <h3>✍️ Editor</h3>
+          <p><strong>Content Quality & Style:</strong> Ensures consistent writing style, proper formatting, 
+          and content quality. Integrates presentation feedback and maintains professional communication standards.</p>
+          <div class="details">
+            <div class="details-field">
+              <label>Capabilities:</label>
+              <div>• Content editing & review<br>• Style consistency<br>• Quality assurance<br>• Professional formatting</div>
+            </div>
+            <div class="details-field">
+              <label>Collaborates With:</label>
+              <div>DocumentMaster, CustomerConnect</div>
+            </div>
+          </div>
         </div>
         <div class="card">
-          <h3>RivalWatcher</h3>
-          <p>Gathers and updates information on competitors for strategic decision-making.</p>
+          <h3>🧙‍♂️ TechWiz</h3>
+          <p><strong>Technical Content Creation:</strong> Produces high-quality technical content, proposals, 
+          and technical documentation. Collaborates with Engineer for technical accuracy and verification.</p>
+          <div class="details">
+            <div class="details-field">
+              <label>Capabilities:</label>
+              <div>• Technical writing<br>• Proposal development<br>• Technical documentation<br>• Content creation</div>
+            </div>
+            <div class="details-field">
+              <label>Collaborates With:</label>
+              <div>Engineer, Editor, DocumentMaster</div>
+            </div>
+          </div>
         </div>
         <div class="card">
-          <h3>Sales</h3>
-          <p>Provides recommendations to optimize sales and maximize business opportunities.</p>
+          <h3>📧 CustomerConnect</h3>
+          <p><strong>Professional Communication:</strong> Drafts professional emails and communications. 
+          Applies feedback on presentation skills, tone, and customer connection strategies.</p>
+          <div class="details">
+            <div class="details-field">
+              <label>Capabilities:</label>
+              <div>• Professional email drafting<br>• Communication strategy<br>• Customer engagement<br>• Presentation support</div>
+            </div>
+            <div class="details-field">
+              <label>Collaborates With:</label>
+              <div>Editor, ProfessionalMentor</div>
+            </div>
+          </div>
         </div>
         <div class="card">
-          <h3>TechnicalWizard</h3>
-          <p>Produces high-quality technical content, such as proposal sections and technical bullet points.</p>
+          <h3>📚 DocumentMaster</h3>
+          <p><strong>Document Organization & Management:</strong> Organizes documents, manages templates, 
+          and ensures proper document structure. Collaborates with Editor for formatting and quality.</p>
+          <div class="details">
+            <div class="details-field">
+              <label>Capabilities:</label>
+              <div>• Document organization<br>• Template management<br>• Structure optimization<br>• Content formatting</div>
+            </div>
+            <div class="details-field">
+              <label>Collaborates With:</label>
+              <div>Editor, TechWiz</div>
+            </div>
+          </div>
         </div>
         <div class="card">
-          <h3>TrendTracker</h3>
-          <p>Monitors market trends, solicitations, and programs related to specific industries.</p>
+          <h3>🎓 ProfessionalMentor</h3>
+          <p><strong>Performance Coaching & Feedback Integration:</strong> Provides personalized coaching, 
+          integrates feedback patterns, and helps improve professional performance across all interactions.</p>
+          <div class="details">
+            <div class="details-field">
+              <label>Capabilities:</label>
+              <div>• Performance coaching<br>• Feedback integration<br>• Professional development<br>• Skill improvement</div>
+            </div>
+            <div class="details-field">
+              <label>Collaborates With:</label>
+              <div>All agents for feedback integration</div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -444,33 +560,65 @@
       sections[key].classList.add('active');
     };
     navItems.forEach(item => item.addEventListener('click', () => showSection(item.dataset.target)));
-    // Load history list
+    // Load history list using formatted responses
     document.querySelector('[data-target="history"]').addEventListener('click', async () => {
       const list = document.getElementById('historyList'); list.innerHTML = '';
       try {
-        const res = await fetch('/responses'); const data = await res.json();
+        const res = await fetch('/api/responses/formatted'); const data = await res.json();
         data.forEach(record => {
-          const obj = JSON.parse(record.content);
-          // print('Record:',obj);
-          const agent = obj.agent || 'Unknown'; 
-          const prompt = obj.prompt || obj.context ||  'No context provided';
-          const response = obj.response.raw_response || obj.response || 'No response provided';
-          const rawTs = obj.timestamp;
-          console.log('Raw Timestamp:', rawTs);
+          console.log('Raw record:', record);
+          
+          // Use formatted response structure
+          const agent = record.agent_name || 'Unknown';
+          const formattedContent = record.formatted_content || record.content || 'No content provided';
+          const topicId = record.topic_id || 'N/A';
+          const tags = record.tags || [];
+          const timestamp = record.timestamp;
+          
+          console.log('Processed data:', { agent, content: formattedContent.substring(0, 100), topicId, tags, timestamp });
+          
           let timestampStr = 'N/A';
-          if (rawTs) {
-            rawTs = rawTs.toDate();
-            timestampStr = rawTs.toLocaleDateString() + ' ' + rawTs.toLocaleTimeString();
+          if (timestamp) {
+            let date;
+            if (timestamp._seconds) {
+              date = new Date(timestamp._seconds * 1000);
+            } else if (typeof timestamp === 'string') {
+              date = new Date(timestamp);
+            } else {
+              date = new Date(timestamp);
+            }
+            timestampStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
           }
-          const truncated = prompt.split(' ').slice(0, 15).join(' ') + (prompt.split(' ').length > 15 ? '...' : '');
+          
+          // Convert markdown content to HTML and then truncate
+          const contentHtml = marked.parse(formattedContent);
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = contentHtml;
+          const textContent = tempDiv.textContent || tempDiv.innerText || '';
+          const truncated = textContent.split(' ').slice(0, 15).join(' ') + (textContent.split(' ').length > 15 ? '...' : '');
+          
           const card = document.createElement('div'); card.className = 'card';
-          card.innerHTML = `<h3>${agent}</h3><p>${truncated}</p>`;
+          card.innerHTML = `
+            <h3>${agent}</h3>
+            <p>${truncated}</p>
+            ${topicId !== 'N/A' ? `<div style="font-size: 0.8em; color: #666; margin-top: 5px;">Topic: ${topicId.substring(0, 8)}...</div>` : ''}
+            ${tags && tags.length > 0 ? `<div style="font-size: 0.8em; color: #666; margin-top: 5px;">Tags: ${tags.slice(0, 3).join(', ')}${tags.length > 3 ? '...' : ''}</div>` : ''}
+          `;
           card.addEventListener('click', () => {
             const container = document.getElementById('detailContainer'); container.innerHTML = '';
-            // Display agent and other simple fields
-            [['Agent', agent], ['Response', response], ['Prompt', prompt], ['Timestamp', timestampStr]].forEach(([label, val]) => {
+            
+            // Display agent and other fields using formatted content
+            const fields = [
+              ['Agent', agent], 
+              ['Content', formattedContent], 
+              ['Topic ID', topicId],
+              ['Tags', tags.length > 0 ? tags.join(', ') : 'No tags'],
+              ['Timestamp', timestampStr]
+            ];
+            
+            fields.forEach(([label, val]) => {
               const fld = document.createElement('div'); fld.className = 'detail-field';
-              if (label === 'Response') {
+              if (label === 'Content') {
                 fld.innerHTML = `<label>${label}:</label><div>${marked.parse(val)}</div>`;
               } else {
                 fld.innerHTML = `<label>${label}:</label><div>${val}</div>`;
@@ -481,63 +629,156 @@
           });
           list.appendChild(card);
         });
-      } catch (e) { historyList.textContent = 'Failed to load history.'; }
+      } catch (e) { 
+        console.error('Error loading history:', e);
+        list.textContent = 'Failed to load history.'; 
+      }
     });
     document.getElementById('backBtn').addEventListener('click', () => showSection('history'));
+    
+    // Add click handlers for agent cards to show/hide details
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('.card') && e.target.closest('#agents')) {
+        const card = e.target.closest('.card');
+        card.classList.toggle('expanded');
+      }
+    });
+    
     // Initialize to dashboard
     showSection('dashboard');
-    // Submit Prompt API call
+    // Enhanced Submit to Orchestrator API call
     const submitButton = document.querySelector('.prompt-panel button');
     const responsePanel = document.getElementById('responsePanel');
     submitButton.addEventListener('click', async () => {
       const promptText = document.querySelector('.prompt-panel textarea').value;
-      const agent = document.getElementById('agentSelect').value;
+      const taskType = document.getElementById('taskTypeSelect').value;
       const provider = document.getElementById('modelSelect').value;
+      const verificationEnabled = document.getElementById('verificationToggle').checked;
+      const feedbackEnabled = document.getElementById('feedbackToggle').checked;
+      
       if (!promptText) return alert('Please enter a prompt.');
-      const endpointMap = { 'MASTER_AGENT': 'master', 'CUSTOMER_CONNECT': 'customerconnect', 'DOCUMENT_MASTER': 'docmaster', 'EDITOR': 'editor', 'ENGINEER': 'engineer', 'PROFESSIONAL_MENTOR': 'promentor', 'RIVAL_WATCHER': 'rivalwatcher', 'SALES': 'sales', 'TECHNICAL_WIZARD': 'techwiz', 'TREND_TRACKER': 'trendtracker' };
-      const endpoint = endpointMap[agent] || 'master';
-      const payload = { provider: provider, model: 0, response: promptText, additional_context: '', topic_id: '', user_id: 'DLbMxLvPkcPmGJuWYCh0' };
+      
+      const payload = { 
+        provider: provider, 
+        model: 0, 
+        response: promptText, 
+        additional_context: `Task Type: ${taskType}`, 
+        topic_id: '', 
+        user_id: 'DLbMxLvPkcPmGJuWYCh0',
+        task_type: taskType,
+        verification_required: verificationEnabled,
+        feedback_context: feedbackEnabled
+      };
+      
       try {
         submitButton.disabled = true;
-        submitButton.textContent = 'Submitting...';
-        responsePanel.textContent = '';
-        const res = await fetch(`/${endpoint}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        submitButton.textContent = 'Processing with Orchestrator...';
+        responsePanel.innerHTML = `
+          <div style="color: #3498db; margin-bottom: 10px;">🤖 Agent Orchestrator Processing...</div>
+          <div style="color: #7f8c8d; font-size: 0.9em;">
+            • Task Type: ${taskType}<br>
+            • Fact Verification: ${verificationEnabled ? 'Enabled' : 'Disabled'}<br>
+            • Feedback Context: ${feedbackEnabled ? 'Applied' : 'Disabled'}<br>
+            • Determining optimal agents...
+          </div>
+        `;
+        
+        const res = await fetch(`/agent`, { 
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json' }, 
+          body: JSON.stringify(payload) 
+        });
         const data = await res.json();
-        responsePanel.textContent = JSON.stringify(data, null, 2);
+        
+        // Enhanced response display with orchestrator details
+        let displayContent = '';
+        
+        if (data.workflow_id) {
+          displayContent += `<div style="background: #e8f5e8; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+            <strong>🔄 Workflow ID:</strong> ${data.workflow_id}<br>
+            <strong>🤝 Agents Involved:</strong> ${data.agents_involved ? data.agents_involved.join(', ') : 'N/A'}<br>
+            <strong>📋 Task Type:</strong> ${data.task_type || 'N/A'}<br>
+            <strong>💡 Feedback Applied:</strong> ${data.feedback_applied ? data.feedback_applied.join(', ') : 'None'}
+          </div>`;
+        }
+        
+        if (data.verification_results) {
+          displayContent += `<div style="background: #f0f8ff; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+            <strong>🔍 Verification Results:</strong><br>
+            • Quality Score: ${data.verification_results.overall_quality_score || 'N/A'}<br>
+            • Reliability: ${data.verification_results.reliability_score || 'N/A'}<br>
+            • Verified Sources: ${data.verification_results.verified_sources_count || 0}<br>
+            • Status: ${data.verification_results.approval_status || 'N/A'}
+          </div>`;
+        }
+        
+        if (data.feedback_impact) {
+          displayContent += `<div style="background: #fff8e1; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+            <strong>📈 Feedback Impact:</strong><br>
+            • Entries Applied: ${data.feedback_impact.entries_applied || 0}<br>
+            • Average Relevance: ${data.feedback_impact.average_relevance || 'N/A'}<br>
+            • Quality Score: ${data.quality_score || 'N/A'}
+          </div>`;
+        }
+        
+        displayContent += `<div style="background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #3498db;">
+          <strong>📝 Response:</strong><br><br>
+          ${marked.parse(data.response || 'No response available')}
+        </div>`;
+        
+        responsePanel.innerHTML = displayContent;
 
-        // Fetch the latest history entry and display it
-        const historyRes = await fetch('/responses?limit=1');
+        // Fetch and display latest history entry using formatted response endpoint
+        const historyRes = await fetch('/api/responses/formatted?limit=1');
         const historyData = await historyRes.json();
         if (historyData.length > 0) {
           const record = historyData[0];
-          const obj = JSON.parse(record.content);
-          const agent = obj.agent || 'Unknown';
-          const prompt = obj.prompt || obj.context || 'No context provided';
-          const response = obj.response.raw_response || obj.response || 'No response provided';
-          const rawTs = obj.timestamp;
+          // Use the formatted response structure
+          const agent = record.agent_name || 'Orchestrator';
+          const formattedContent = record.formatted_content || record.content || 'No content provided';
+          const topicId = record.topic_id || 'N/A';
+          const tags = record.tags || [];
+          const timestamp = record.timestamp;
+          
           let timestampStr = 'N/A';
-          if (rawTs) {
-            if (typeof rawTs === 'string') {
-              timestampStr = rawTs;
-            } else if (rawTs._seconds) {
-              timestampStr = new Date(rawTs._seconds * 1000).toLocaleString();
+          if (timestamp) {
+            let date;
+            if (timestamp._seconds) {
+              date = new Date(timestamp._seconds * 1000);
+            } else if (typeof timestamp === 'string') {
+              date = new Date(timestamp);
+            } else {
+              date = new Date(timestamp);
             }
+            timestampStr = date.toLocaleString();
           }
 
           const historyCard = document.getElementById('historyDetailCard');
           historyCard.innerHTML = `
-            <h3>Latest Entry</h3>
+            <h3>Latest Agent Response</h3>
             <div class="detail-field">
               <label>Agent:</label>
               <div>${agent}</div>
             </div>
             <div class="detail-field">
-              <label>Prompt:</label>
-              <div>${prompt}</div>
+              <label>Topic ID:</label>
+              <div>${topicId}</div>
             </div>
             <div class="detail-field">
-              <label>Response:</label>
-              <div>${marked.parse(response)}</div>
+              <label>Workflow ID:</label>
+              <div>${data.workflow_id || 'N/A'}</div>
+            </div>
+            <div class="detail-field">
+              <label>Agents Involved:</label>
+              <div>${data.agents_involved ? data.agents_involved.join(', ') : 'N/A'}</div>
+            </div>
+            <div class="detail-field">
+              <label>Tags:</label>
+              <div>${tags.length > 0 ? tags.join(', ') : 'No tags'}</div>
+            </div>
+            <div class="detail-field">
+              <label>Content:</label>
+              <div>${marked.parse(formattedContent)}</div>
             </div>
             <div class="detail-field">
               <label>Timestamp:</label>
@@ -547,11 +788,14 @@
           historyCard.style.display = 'block';
         }
       } catch (error) {
-        responsePanel.textContent = 'Error submitting prompt.';
+        responsePanel.innerHTML = `<div style="color: #e74c3c; padding: 10px; background: #fadbd8; border-radius: 5px;">
+          <strong>❌ Error:</strong> Failed to process request through orchestrator.<br>
+          <small>${error.message}</small>
+        </div>`;
         console.error(error);
       } finally {
         submitButton.disabled = false;
-        submitButton.textContent = 'Submit Prompt';
+        submitButton.textContent = 'Submit to Orchestrator';
       }
     });
   </script>

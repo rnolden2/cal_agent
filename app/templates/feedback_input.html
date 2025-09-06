@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAL Feedback Input - Submit Boss Feedback</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            color: #7f8c8d;
+            font-size: 1.2em;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 1.1em;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-group .help-text {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .category-option {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .category-option:hover {
+            border-color: #3498db;
+            background: #e3f2fd;
+        }
+
+        .category-option.selected {
+            border-color: #3498db;
+            background: #3498db;
+            color: white;
+        }
+
+        .category-option input[type="radio"] {
+            display: none;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+            width: 100%;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+
+        .submit-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .navigation {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .nav-link {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: bold;
+            margin: 0 15px;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: #2980b9;
+        }
+
+        .quick-categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .quick-category {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quick-category:hover {
+            background: #1976d2;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                padding: 20px;
+            }
+
+            .category-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 Submit Feedback</h1>
+            <p class="subtitle">Add feedback from your boss to improve future AI responses</p>
+        </div>
+
+        <div id="successMessage" class="success-message">
+            Feedback submitted successfully! It will be incorporated into future responses.
+        </div>
+
+        <div id="errorMessage" class="error-message">
+            Error submitting feedback. Please try again.
+        </div>
+
+        <form id="feedbackForm">
+            <div class="form-group">
+                <label for="feedbackText">Feedback Content *</label>
+                <textarea 
+                    id="feedbackText" 
+                    name="feedback_text" 
+                    placeholder="Enter the feedback from your boss here..."
+                    required
+                ></textarea>
+                <div class="help-text">
+                    Copy and paste feedback directly from emails, meeting notes, or verbal feedback.
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="category">Feedback Category *</label>
+                <div class="category-grid">
+                    <div class="category-option" data-category="presentation_skills">
+                        <input type="radio" name="category" value="presentation_skills" id="cat_presentation">
+                        <div>🎯 Presentation Skills</div>
+                    </div>
+                    <div class="category-option" data-category="technical_accuracy">
+                        <input type="radio" name="category" value="technical_accuracy" id="cat_technical">
+                        <div>🔧 Technical Accuracy</div>
+                    </div>
+                    <div class="category-option" data-category="business_focus">
+                        <input type="radio" name="category" value="business_focus" id="cat_business">
+                        <div>💼 Business Focus</div>
+                    </div>
+                    <div class="category-option" data-category="communication_style">
+                        <input type="radio" name="category" value="communication_style" id="cat_communication">
+                        <div>💬 Communication Style</div>
+                    </div>
+                    <div class="category-option" data-category="research_depth">
+                        <input type="radio" name="category" value="research_depth" id="cat_research">
+                        <div>📊 Research Depth</div>
+                    </div>
+                    <div class="category-option" data-category="general">
+                        <input type="radio" name="category" value="general" id="cat_general">
+                        <div>📋 General</div>
+                    </div>
+                </div>
+                <div class="help-text">
+                    Select the category that best matches the type of feedback.
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="context">Context (Optional)</label>
+                <input 
+                    type="text" 
+                    id="context" 
+                    name="context" 
+                    placeholder="e.g., Army presentation, customer meeting, proposal review"
+                >
+                <div class="help-text">
+                    Provide context about when/where this feedback was given.
+                </div>
+                <div class="quick-categories">
+                    <div class="quick-category" onclick="setContext('Army presentation')">Army presentation</div>
+                    <div class="quick-category" onclick="setContext('Customer meeting')">Customer meeting</div>
+                    <div class="quick-category" onclick="setContext('Proposal review')">Proposal review</div>
+                    <div class="quick-category" onclick="setContext('Technical review')">Technical review</div>
+                    <div class="quick-category" onclick="setContext('Business meeting')">Business meeting</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="userId">User ID *</label>
+                <input 
+                    type="text" 
+                    id="userId" 
+                    name="user_id" 
+                    placeholder="Your user ID"
+                    required
+                >
+                <div class="help-text">
+                    Enter your user ID to associate this feedback with your account.
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="agentName">Specific Agent (Optional)</label>
+                <select id="agentName" name="agent_name">
+                    <option value="">All Agents</option>
+                    <option value="CustomerConnect">Customer Connect</option>
+                    <option value="DocumentMaster">Document Master</option>
+                    <option value="Editor">Editor</option>
+                    <option value="Engineer">Engineer</option>
+                    <option value="ProfessionalMentor">Professional Mentor</option>
+                    <option value="RivalWatcher">Rival Watcher</option>
+                    <option value="Sales">Sales</option>
+                    <option value="TechnicalWizard">Technical Wizard</option>
+                    <option value="TrendTracker">Trend Tracker</option>
+                    <option value="General">General</option>
+                </select>
+                <div class="help-text">
+                    Select a specific agent if this feedback applies to one particular agent.
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="rating">Impact Rating (Optional)</label>
+                <select id="rating" name="rating">
+                    <option value="">No Rating</option>
+                    <option value="1">1 - Minor improvement needed</option>
+                    <option value="2">2 - Some improvement needed</option>
+                    <option value="3">3 - Moderate improvement needed</option>
+                    <option value="4">4 - Significant improvement needed</option>
+                    <option value="5">5 - Critical improvement needed</option>
+                </select>
+                <div class="help-text">
+                    Rate the importance/impact of this feedback.
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">
+                📤 Submit Feedback
+            </button>
+        </form>
+
+        <div class="navigation">
+            <a href="/" class="nav-link">🏠 Home</a>
+            <a href="/feedback-display" class="nav-link">📊 View Feedback Dashboard</a>
+            <a href="/history" class="nav-link">📜 History</a>
+        </div>
+    </div>
+
+    <script>
+        // Handle category selection
+        document.querySelectorAll('.category-option').forEach(option => {
+            option.addEventListener('click', function() {
+                // Remove selected class from all options
+                document.querySelectorAll('.category-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                
+                // Add selected class to clicked option
+                this.classList.add('selected');
+                
+                // Check the radio button
+                const radio = this.querySelector('input[type="radio"]');
+                radio.checked = true;
+            });
+        });
+
+        // Quick context setting
+        function setContext(contextText) {
+            document.getElementById('context').value = contextText;
+        }
+
+        // Form submission
+        document.getElementById('feedbackForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const successMessage = document.getElementById('successMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            // Hide previous messages
+            successMessage.style.display = 'none';
+            errorMessage.style.display = 'none';
+            
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.textContent = '📤 Submitting...';
+            
+            try {
+                // Collect form data
+                const formData = new FormData(this);
+                const feedbackData = {
+                    feedback_text: formData.get('feedback_text'),
+                    category: formData.get('category'),
+                    user_id: formData.get('user_id'),
+                    context: formData.get('context') || null,
+                    agent_name: formData.get('agent_name') || null,
+                    rating: formData.get('rating') ? parseInt(formData.get('rating')) : null,
+                    source: 'boss_feedback'
+                };
+                
+                // Validate required fields
+                if (!feedbackData.feedback_text || !feedbackData.category || !feedbackData.user_id) {
+                    throw new Error('Please fill in all required fields');
+                }
+                
+                // Submit to API
+                const response = await fetch('/feedback', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(feedbackData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Show success message
+                    successMessage.style.display = 'block';
+                    successMessage.textContent = result.message;
+                    
+                    // Reset form
+                    this.reset();
+                    document.querySelectorAll('.category-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // Scroll to top to show success message
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    throw new Error(result.message || 'Failed to submit feedback');
+                }
+                
+            } catch (error) {
+                console.error('Error submitting feedback:', error);
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = error.message || 'Error submitting feedback. Please try again.';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } finally {
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.textContent = '📤 Submit Feedback';
+            }
+        });
+
+        // Auto-categorize based on feedback content
+        document.getElementById('feedbackText').addEventListener('input', function() {
+            const text = this.value.toLowerCase();
+            
+            // Simple auto-categorization based on keywords
+            if (text.includes('presentation') || text.includes('tone') || text.includes('cadence') || text.includes('verbose')) {
+                selectCategory('presentation_skills');
+            } else if (text.includes('technical') || text.includes('accuracy') || text.includes('specification') || text.includes('engineering')) {
+                selectCategory('technical_accuracy');
+            } else if (text.includes('business') || text.includes('customer') || text.includes('revenue') || text.includes('opportunity')) {
+                selectCategory('business_focus');
+            } else if (text.includes('communication') || text.includes('explain') || text.includes('clarity')) {
+                selectCategory('communication_style');
+            } else if (text.includes('research') || text.includes('data') || text.includes('analysis') || text.includes('elaborate')) {
+                selectCategory('research_depth');
+            }
+        });
+
+        function selectCategory(categoryValue) {
+            // Only auto-select if no category is currently selected
+            const currentlySelected = document.querySelector('.category-option.selected');
+            if (!currentlySelected) {
+                const categoryOption = document.querySelector(`[data-category="${categoryValue}"]`);
+                if (categoryOption) {
+                    categoryOption.click();
+                }
+            }
+        }
+
+        // Load user ID from localStorage if available
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedUserId = localStorage.getItem('cal_user_id');
+            if (savedUserId) {
+                document.getElementById('userId').value = savedUserId;
+            }
+        });
+
+        // Save user ID to localStorage when form is submitted
+        document.getElementById('feedbackForm').addEventListener('submit', function() {
+            const userId = document.getElementById('userId').value;
+            if (userId) {
+                localStorage.setItem('cal_user_id', userId);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -20,6 +20,9 @@ google-cloud-firestore = "^2.19.0"
 logging = "^0.4.9.6"
 google-genai = "^1.25.0"
 debugpy = "^1.8.15"
+beautifulsoup4 = "^4.13.5"
+aiohttp = "^3.12.15"
+firebase-admin = "6.9.0"
 
 [build-system]
 requires = ["poetry-core"]
