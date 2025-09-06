@@ -9,11 +9,12 @@ CAL features a web interface for user interaction and a RESTful API for programm
 - **Dynamic Task Routing:** Intelligently routes tasks to the most suitable specialized agents.
 - **Collaborative Workflows:** Orchestrates multiple agents to work together on complex tasks.
 - **Response Aggregation:** Aggregates responses from multiple agents into a unified, coherent output.
-- **Web Interface:** A user-friendly web interface for interacting with the system, viewing results, and managing workflows.
+- **Mobile-Friendly Interface:** Responsive web interface optimized for desktop, tablet, and mobile devices.
 - **RESTful API:** A comprehensive set of API endpoints for programmatic interaction with the platform.
 - **Feedback Management:** A system for incorporating user feedback to improve agent performance.
 - **Quality Assurance:** Automated quality checks and fact verification for agent responses.
 - **Firestore Integration:** Uses Google Firestore for scalable and reliable data storage.
+- **Accessibility:** Full keyboard navigation support and screen reader compatibility.
 
 ## Getting Started
 
@@ -45,13 +46,20 @@ poetry run uvicorn app.main:app --reload
 The application will be available at `http://127.0.0.1:8000`.
 
 ## Web Interface
-The web interface provides a user-friendly way to interact with the CAL platform. It includes the following pages:
--   **Home:** The main landing page for submitting tasks.
+The web interface provides a user-friendly, mobile-responsive way to interact with the CAL platform. It includes the following pages:
+-   **Home:** The main landing page for submitting tasks, optimized for all device sizes.
 -   **Market Research:** A dedicated interface for market research tasks.
 -   **Workflow Dashboard:** A dashboard for monitoring the status of ongoing workflows.
--   **Report Interface:** An interface for generating and viewing reports.
+-   **Report Interface:** An interface for generating and viewing reports with responsive layouts.
 -   **Feedback Display:** A page for viewing and managing feedback.
 -   **History:** A history of all past requests and responses.
+
+### Mobile Experience
+- **Responsive Design:** All pages adapt seamlessly from mobile (320px) to desktop displays
+- **Touch-Friendly:** Minimum 44px touch targets for optimal mobile interaction
+- **Fluid Typography:** Text scales appropriately across all screen sizes
+- **Accessible Navigation:** Keyboard and screen reader friendly interface
+- **Performance Optimized:** Fast loading and smooth interactions on all devices
 
 ## API Endpoints
 The following are the main API endpoints provided by the application:
