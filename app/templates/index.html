@@ -5,8 +5,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CAL Dashboard</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/index.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='css/base.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='css/pages/index.css') }}">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 
@@ -14,9 +14,7 @@
   <div class="sidebar">
     <h2>CAL Dashboard</h2>
     <div class="nav-item" data-target="dashboard">Master</div>
-    <div class="nav-item" data-target="upload">Upload</div>
     <div class="nav-item" data-target="history">History</div>
-    <div class="nav-item" data-target="settings">Settings</div>
     <div class="nav-item" data-target="agents">Agents</div>
     <div class="nav-item" onclick="window.location.href='/workflow-dashboard'">Workflow Dashboard</div>
     <div class="nav-item" onclick="window.location.href='/simple-report-generator'">Report Generator</div>

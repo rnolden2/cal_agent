@@ -9,8 +9,7 @@ from typing import List, Optional
 import uvicorn
 from fastapi import FastAPI, Query, Request
 from fastapi.templating import Jinja2Templates
-
-# from starlette.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from .agent_schema.agent_master_schema import (
     AgentCallModel,
@@ -51,7 +50,11 @@ logger = logging.getLogger(__name__)
 templates = Jinja2Templates(
     directory=os.path.join(os.path.dirname(__file__), "templates")
 )
-
+app.mount(
+    "/static",
+    StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")),
+    name="static",
+)
 # Load the market research template from file
 try:
     template_path = os.path.join(
