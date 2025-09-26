@@ -27,7 +27,7 @@ def get_secret(secret):
 
 
 genai_api_key = get_secret("gemini_api")
-genai.Client(api_key=genai_api_key)
+google_client = genai.Client(api_key=genai_api_key)
 
 
 class OpenAIClient:
@@ -85,10 +85,10 @@ class GoogleClient:
         try:
             if model:
                 model_name = google_models[model]
-                self.client = genai.GenerativeModel(model_name)  # Initialize the model
+                self.client = google_client.models.generate_content(model_name)  # Initialize the model
             else:
                 model_name = google_models[0]
-                self.client = genai.GenerativeModel(model_name)  # Initialize the model
+                self.client = google_client.models.generate_content(model_name)  # Initialize the model
 
         except IndexError:
             raise ValueError(
