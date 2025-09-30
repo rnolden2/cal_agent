@@ -91,4 +91,3 @@ We welcome contributions to the Collaborative AI Layer project. Please feel free
 ## License
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-https://storage.googleapis.com/api-project-371618.appspot.com/resources/feedback.txt
