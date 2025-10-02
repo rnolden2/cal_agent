@@ -78,17 +78,15 @@ class OpenAIClient:
 class GoogleClient:
     def __init__(self):
         # Initialize
-        self.client = None
+        self.model_name = None
 
     def load_model(self, model: int):
-        """Loads the specified Gemini model."""
+        """Loads the specified Gemini model name."""
         try:
             if model:
-                model_name = google_models[model]
-                self.client = google_client.models.generate_content(model_name)  # Initialize the model
+                self.model_name = google_models[model]
             else:
-                model_name = google_models[0]
-                self.client = google_client.models.generate_content(model_name)  # Initialize the model
+                self.model_name = google_models[0]
 
         except IndexError:
             raise ValueError(
@@ -100,8 +98,9 @@ class GoogleClient:
     def predict(self, agent: AgentModel):
         try:
             self.load_model(agent.model)
-            completion = self.client.generate_content(
-                agent.role + " : " + agent.content,
+            completion = google_client.models.generate_content(
+                model=self.model_name,
+                contents=agent.role + " : " + agent.content,
                 generation_config=genai.GenerationConfig(
                     response_mime_type="application/json",
                     response_schema=agent.agent_schema,
@@ -156,6 +155,7 @@ class PerplexityClient:
                 data = response.json()
                 response = data["choices"][0]["message"]["content"]
                 citations = data["citations"]
+                search_results = data["search_results"]
 
                 # Create a new dictionary
                 result = {
@@ -163,6 +163,7 @@ class PerplexityClient:
                     "response": {
                         "content": response,
                         "citations": citations,
+                        "search_results": search_results,
                         "provider": "perplexity",
                     },
                 }
