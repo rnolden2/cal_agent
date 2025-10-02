@@ -6,6 +6,13 @@ import logging
 import os
 from datetime import datetime, timedelta
 
+try:
+    from google.cloud import storage
+    STORAGE_AVAILABLE = True
+except ImportError:
+    STORAGE_AVAILABLE = False
+    storage = None
+
 from ..storage.firestore_db import get_agent_responses, get_feedback
 from ..orchestrator.agent_capabilities import get_feedback_categories_for_agent, FEEDBACK_CATEGORIES
 from .relevance_scorer import RelevanceScorer, FeedbackEntry
@@ -166,22 +173,48 @@ class FeedbackContextManager:
     
     def _load_feedback_data(self):
         """
-        Load and parse feedback data from feedback.txt
+        Load and parse feedback data from Google Cloud Storage
         """
         try:
+            # Configuration for GCS bucket and blob
+            bucket_name = "api-project-371618.appspot.com"
+            blob_path = "resources/feedback.txt"
+            
+            # Try to fetch feedback from Google Cloud Storage
+            if STORAGE_AVAILABLE:
+                try:
+                    # Initialize the Storage client (uses ADC automatically)
+                    client = storage.Client()
+                    bucket = client.bucket(bucket_name)
+                    blob = bucket.blob(blob_path)
+                    
+                    # Download the blob content as text
+                    feedback_text = blob.download_as_text(encoding='utf-8')
+                    
+                    self.parsed_feedback_entries = self.relevance_scorer.parse_feedback_from_text(feedback_text)
+                    logger.info(f"Loaded {len(self.parsed_feedback_entries)} feedback entries from Google Cloud Storage")
+                    return
+                    
+                except Exception as e:
+                    logger.error(f"Failed to fetch feedback from Google Cloud Storage: {e}")
+            else:
+                logger.warning("Google Cloud Storage client not available")
+            
+            # Fallback to local file if cloud storage fails
             feedback_file_path = os.path.join(
                 os.path.dirname(__file__), 
                 "..", "resources", "templates", "feedback.txt"
             )
             
             if os.path.exists(feedback_file_path):
+                logger.info("Falling back to local feedback file")
                 with open(feedback_file_path, 'r', encoding='utf-8') as f:
                     feedback_text = f.read()
                 
                 self.parsed_feedback_entries = self.relevance_scorer.parse_feedback_from_text(feedback_text)
-                logger.info(f"Loaded {len(self.parsed_feedback_entries)} feedback entries from feedback.txt")
+                logger.info(f"Loaded {len(self.parsed_feedback_entries)} feedback entries from local fallback")
             else:
-                logger.warning(f"Feedback file not found at {feedback_file_path}")
+                logger.warning("No feedback source available (cloud storage failed and local file not found)")
                 self.parsed_feedback_entries = []
                 
         except Exception as e:
