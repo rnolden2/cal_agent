@@ -101,7 +101,7 @@ class GoogleClient:
             completion = google_client.models.generate_content(
                 model=self.model_name,
                 contents=agent.role + " : " + agent.content,
-                generation_config=genai.GenerationConfig(
+                config=genai.types.GenerateContentConfig(
                     response_mime_type="application/json",
                     response_schema=agent.agent_schema,
                 ),
