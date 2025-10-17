@@ -442,15 +442,99 @@
       background: var(--text-light);
       border: 2px dashed #ccc;
       border-radius: var(--radius);
-      padding: var(--spacing);
+      padding: calc(var(--spacing) * 2);
       text-align: center;
       cursor: pointer;
-      transition: border-color var(--transition-speed);
+      transition: all var(--transition-speed);
       margin-bottom: calc(var(--spacing) * 2);
+      position: relative;
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
     }
 
     .upload-panel:hover {
       border-color: var(--primary);
+      background: #f8f9ff;
+    }
+
+    .upload-panel.drag-over {
+      border-color: var(--success);
+      background: #f0fff4;
+      border-style: solid;
+    }
+
+    .upload-icon {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+
+    .upload-text {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 5px;
+    }
+
+    .upload-subtext {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 15px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e9ecef;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--success));
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .upload-results {
+      width: 100%;
+      text-align: left;
+    }
+
+    .upload-result {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px;
+      margin-bottom: 5px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      border-left: 4px solid var(--success);
+    }
+
+    .upload-result.error {
+      border-left-color: var(--danger);
+      background: #fff5f5;
+    }
+
+    .upload-result .file-name {
+      font-weight: 500;
+    }
+
+    .upload-result .file-status {
+      font-size: 0.8rem;
+      padding: 2px 6px;
+      border-radius: 12px;
+      background: var(--success);
+      color: white;
+    }
+
+    .upload-result.error .file-status {
+      background: var(--danger);
     }
 
     /* Prompt Panel */
@@ -692,7 +776,21 @@
         <h1>Dashboard</h1>
         <input type="search" placeholder="Search..." />
       </div>
-      <div class="upload-panel">Drag & Drop to Upload Notes or Click to Browse</div>
+      <div class="upload-panel" id="uploadPanel" onclick="triggerFileInput()">
+        <input type="file" id="fileInput" accept=".txt" multiple style="display: none;">
+        <div id="uploadContent">
+          <div class="upload-icon">📁</div>
+          <div class="upload-text">Drag & Drop Reference Documents (.txt) or Click to Browse</div>
+          <div class="upload-subtext">Upload knowledge base documents for automatic processing and LLM context</div>
+        </div>
+        <div id="uploadProgress" style="display: none;">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div id="uploadStatus">Uploading...</div>
+        </div>
+        <div id="uploadResults" style="display: none;"></div>
+      </div>
       <div class="prompt-panel">
         <textarea placeholder="Enter your prompt here..."></textarea>
         <div class="prompt-footer">
@@ -1011,6 +1109,214 @@
 
     // Initialize to dashboard
     showSection('dashboard');
+    // File Upload Functionality
+    const uploadPanel = document.getElementById('uploadPanel');
+    const fileInput = document.getElementById('fileInput');
+    const uploadContent = document.getElementById('uploadContent');
+    const uploadProgress = document.getElementById('uploadProgress');
+    const uploadResults = document.getElementById('uploadResults');
+    const progressFill = document.getElementById('progressFill');
+    const uploadStatus = document.getElementById('uploadStatus');
+
+    // Prevent default drag behaviors
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      uploadPanel.addEventListener(eventName, preventDefaults, false);
+      document.body.addEventListener(eventName, preventDefaults, false);
+    });
+
+    // Highlight drop area when item is dragged over it
+    ['dragenter', 'dragover'].forEach(eventName => {
+      uploadPanel.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      uploadPanel.addEventListener(eventName, unhighlight, false);
+    });
+
+    // Handle dropped files
+    uploadPanel.addEventListener('drop', handleDrop, false);
+
+    // Handle file input change
+    fileInput.addEventListener('change', function(e) {
+      handleFiles(e.target.files);
+    });
+
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    function highlight(e) {
+      uploadPanel.classList.add('drag-over');
+    }
+
+    function unhighlight(e) {
+      uploadPanel.classList.remove('drag-over');
+    }
+
+    function handleDrop(e) {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      handleFiles(files);
+    }
+
+    function triggerFileInput() {
+      fileInput.click();
+    }
+
+    async function handleFiles(files) {
+      const fileArray = Array.from(files);
+      
+      // Filter for .txt files only
+      const txtFiles = fileArray.filter(file => 
+        file.name.toLowerCase().endsWith('.txt') && file.type === 'text/plain'
+      );
+
+      if (txtFiles.length === 0) {
+        showUploadError('Please select only .txt files for feedback upload.');
+        return;
+      }
+
+      if (txtFiles.length !== fileArray.length) {
+        showUploadError(`${fileArray.length - txtFiles.length} non-txt files were filtered out. Only uploading ${txtFiles.length} txt files.`);
+      }
+
+      // Show progress
+      showUploadProgress();
+      
+      const results = [];
+      let completed = 0;
+
+      for (const file of txtFiles) {
+        try {
+          const result = await uploadFile(file);
+          results.push({ file: file.name, success: true, result });
+          completed++;
+          
+          // Update progress
+          const progress = (completed / txtFiles.length) * 100;
+          updateProgress(progress, `Uploaded ${completed} of ${txtFiles.length} files`);
+          
+        } catch (error) {
+          console.error(`Error uploading ${file.name}:`, error);
+          results.push({ file: file.name, success: false, error: error.message });
+          completed++;
+          
+          // Update progress even for errors
+          const progress = (completed / txtFiles.length) * 100;
+          updateProgress(progress, `Processed ${completed} of ${txtFiles.length} files`);
+        }
+      }
+
+      // Show results
+      showUploadResults(results);
+    }
+
+    async function uploadFile(file) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('user_id', 'DLbMxLvPkcPmGJuWYCh0'); // Default user ID
+      formData.append('description', `Reference document uploaded via drag and drop: ${file.name}`);
+
+      const response = await fetch('/documents/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: 'Upload failed' }));
+        throw new Error(errorData.detail || 'Upload failed');
+      }
+
+      return await response.json();
+    }
+
+    function showUploadProgress() {
+      uploadContent.style.display = 'none';
+      uploadResults.style.display = 'none';
+      uploadProgress.style.display = 'block';
+      updateProgress(0, 'Preparing upload...');
+    }
+
+    function updateProgress(percentage, status) {
+      progressFill.style.width = percentage + '%';
+      uploadStatus.textContent = status;
+    }
+
+    function showUploadResults(results) {
+      uploadProgress.style.display = 'none';
+      uploadResults.style.display = 'block';
+      
+      const successCount = results.filter(r => r.success).length;
+      const errorCount = results.filter(r => !r.success).length;
+      
+      let resultsHTML = `
+        <div style="margin-bottom: 15px;">
+          <strong>Upload Complete:</strong> ${successCount} successful, ${errorCount} failed
+        </div>
+      `;
+
+      results.forEach(result => {
+        const statusClass = result.success ? '' : 'error';
+        const statusText = result.success ? 'Processed' : 'Failed';
+        const processingInfo = result.success && result.result ? 
+          `<div style="font-size: 0.8em; color: #666; margin-top: 3px;">
+            Sections: ${result.result.processing_result?.sections_count || 'Unknown'} | 
+            Category: ${result.result.processing_result?.dominant_category || 'Unknown'}
+          </div>` : 
+          result.error ? `<div style="font-size: 0.8em; color: #dc3545; margin-top: 3px;">${result.error}</div>` : '';
+        
+        resultsHTML += `
+          <div class="upload-result ${statusClass}">
+            <div>
+              <div class="file-name">${result.file}</div>
+              ${processingInfo}
+            </div>
+            <div class="file-status">${statusText}</div>
+          </div>
+        `;
+      });
+
+      // Add button to reset upload panel
+      resultsHTML += `
+        <div style="margin-top: 15px; text-align: center;">
+          <button onclick="resetUploadPanel()" style="
+            background: var(--primary); color: white; border: none; 
+            padding: 8px 16px; border-radius: 4px; cursor: pointer;
+          ">Upload More Files</button>
+        </div>
+      `;
+
+      uploadResults.innerHTML = resultsHTML;
+    }
+
+    function showUploadError(message) {
+      uploadResults.style.display = 'block';
+      uploadResults.innerHTML = `
+        <div class="upload-result error">
+          <div>
+            <div class="file-name">Upload Error</div>
+            <div style="font-size: 0.8em; color: #dc3545; margin-top: 3px;">${message}</div>
+          </div>
+          <div class="file-status">Error</div>
+        </div>
+        <div style="margin-top: 15px; text-align: center;">
+          <button onclick="resetUploadPanel()" style="
+            background: var(--primary); color: white; border: none; 
+            padding: 8px 16px; border-radius: 4px; cursor: pointer;
+          ">Try Again</button>
+        </div>
+      `;
+    }
+
+    function resetUploadPanel() {
+      uploadContent.style.display = 'block';
+      uploadProgress.style.display = 'none';
+      uploadResults.style.display = 'none';
+      fileInput.value = ''; // Clear file input
+      uploadPanel.classList.remove('drag-over');
+    }
+
     // Enhanced Submit to Orchestrator API call
     const submitButton = document.querySelector('.prompt-panel button');
     const responsePanel = document.getElementById('responsePanel');

@@ -115,7 +115,7 @@ class AgentOrchestrator:
             
             # 3. Execute collaborative workflow
             workflow_id = self._generate_workflow_id()
-            agent_responses = await self._execute_collaborative_workflow(
+            agent_responses, agent_llm_info = await self._execute_collaborative_workflow(
                 agents=required_agents,
                 prompt=enhanced_prompt,
                 request=request,
@@ -163,7 +163,8 @@ class AgentOrchestrator:
                 agent_responses=agent_responses,
                 workflow_id=workflow_id,
                 user_id=request.user_id,
-                topic_id=getattr(request, 'topic_id', None)
+                topic_id=getattr(request, 'topic_id', None),
+                agent_llm_info=agent_llm_info
             )
             
             # 8. Return unified response with all metrics
@@ -297,11 +298,15 @@ class AgentOrchestrator:
                                             agents: List[str], 
                                             prompt: str,
                                             request: AgentCallModel,
-                                            workflow_id: str) -> Dict[str, str]:
+                                            workflow_id: str) -> tuple[Dict[str, str], Dict[str, Dict]]:
         """
         Execute the collaborative workflow with multiple agents
+        
+        Returns:
+            Tuple of (agent_responses, agent_llm_info)
         """
         agent_responses = {}
+        agent_llm_info = {}
         
         for agent_name in agents:
             try:
@@ -315,6 +320,12 @@ class AgentOrchestrator:
                 
                 # Determine optimal provider and model for agent
                 provider, model = self._determine_optimal_provider_model(agent_name, prompt)
+                
+                # Store LLM info for this agent
+                agent_llm_info[agent_name] = {
+                    "provider": provider.value,
+                    "model": str(model)
+                }
                 
                 # Create AgentModel for the specific agent
                 agent_model = AgentModel(
@@ -333,13 +344,19 @@ class AgentOrchestrator:
                 response = await callModel(agent_model)
                 agent_responses[agent_name] = response
                 
-                logger.info(f"Agent {agent_name} completed for workflow {workflow_id}")
+                logger.info(f"Agent {agent_name} completed for workflow {workflow_id} using {provider.value}/model-{model}")
                 
             except Exception as e:
                 logger.error(f"Error executing agent {agent_name}: {e}")
                 agent_responses[agent_name] = f"Error: {str(e)}"
+                # Still track LLM info even if there was an error
+                if agent_name not in agent_llm_info:
+                    agent_llm_info[agent_name] = {
+                        "provider": "error",
+                        "model": "error"
+                    }
         
-        return agent_responses
+        return agent_responses, agent_llm_info
     
     def _get_agent_description(self, agent_name: str) -> str:
         """
@@ -410,22 +427,34 @@ Please provide your response based on your specific expertise and role. Focus on
     
     async def _store_individual_agent_responses(self, agent_responses: Dict[str, str],
                                               workflow_id: str, user_id: str, 
-                                              topic_id: Optional[str] = None):
+                                              topic_id: Optional[str] = None,
+                                              agent_llm_info: Optional[Dict[str, Dict]] = None):
         """
         Store individual agent responses for future learning and UI display
         """
         try:
             stored_count = 0
             for agent_name, response_content in agent_responses.items():
+                # Get LLM information for this agent if available
+                llm_provider = None
+                llm_model = None
+                
+                if agent_llm_info and agent_name in agent_llm_info:
+                    llm_info = agent_llm_info[agent_name]
+                    llm_provider = llm_info.get("provider")
+                    llm_model = llm_info.get("model")
+                
                 # Store each agent response as a separate document
                 doc_id = await store_agent_response(
                     content=response_content,
                     user_id=user_id,
                     agent_name=agent_name,
-                    topic_id=topic_id
+                    topic_id=topic_id,
+                    llm_provider=llm_provider,
+                    llm_model=llm_model
                 )
                 stored_count += 1
-                logger.info(f"Stored response for agent {agent_name} with doc_id: {doc_id}")
+                logger.info(f"Stored response for agent {agent_name} with doc_id: {doc_id}, LLM: {llm_provider}/{llm_model}")
             
             logger.info(f"Stored {stored_count} individual agent responses for workflow {workflow_id}")
             

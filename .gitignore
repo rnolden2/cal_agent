@@ -38,3 +38,6 @@ app/config/config.py
 app/resources/templates/market_research.txt
 app/config/api-project-37.json
 docs/
+app/resources/templates/feedback.txt
+feedback.txt
+CHANGELOG.md

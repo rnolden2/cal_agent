@@ -14,16 +14,34 @@ firebase_admin.initialize_app()
 database = "cal-project"
 db = firestore.client(database_id=database)
 
-async def store_agent_response(content: str, user_id: str, agent_name: str, topic_id: Optional[str] = None) -> str:
-    """Store individual agent response in Firestore database with auto-generated tags."""
+async def store_agent_response(content: str, user_id: str, agent_name: str, topic_id: Optional[str] = None, 
+                              llm_provider: Optional[str] = None, llm_model: Optional[str] = None) -> str:
+    """Store individual agent response in Firestore database with auto-generated tags and LLM tracking."""
     try:
+        # Validate content before storing
+        if not content or content.strip() == "":
+            raise ValueError(f"Empty content detected for agent {agent_name}")
+        
+        # Check for corrupted content patterns
+        corrupted_patterns = [
+            '{"type":"object","properties":{},"data":{}}',
+            '{"type":"object","properties":{}}',
+            'type object properties'
+        ]
+        
+        content_lower = content.lower().strip()
+        for pattern in corrupted_patterns:
+            if pattern.lower() in content_lower:
+                logging.warning(f"Detected potentially corrupted content for agent {agent_name}: {content[:100]}")
+                raise ValueError(f"Corrupted content pattern detected for agent {agent_name}")
+        
         col = db.collection("agent_responses")
         doc_ref = col.document()
         
         # Generate tags from content
         tags = generate_tags_from_content(content, max_tags=20)
         
-        # Store the response with agent metadata and tags
+        # Store the response with agent metadata, tags, and LLM information
         data = {
             "content": content,
             "agent_name": agent_name,
@@ -31,15 +49,39 @@ async def store_agent_response(content: str, user_id: str, agent_name: str, topi
             "topic_id": topic_id,
             "tags": tags,
             "response_id": doc_ref.id,
+            "llm_provider": llm_provider,
+            "llm_model": llm_model,
+            "content_length": len(content),
+            "content_status": "valid",
             "timestamp": firestore.SERVER_TIMESTAMP
         }
         
         doc_ref.set(data)
         doc_id = doc_ref.id
-        logging.info(f"Agent response document created with ID: {doc_id} for agent: {agent_name} with {len(tags)} tags")
+        logging.info(f"Agent response stored successfully - ID: {doc_id}, Agent: {agent_name}, LLM: {llm_provider}/{llm_model}, Content length: {len(content)}, Tags: {len(tags)}")
         return doc_id
     except Exception as e:
         logging.error(f"Error writing agent response to Firestore: {e}", exc_info=True)
+        # Store error information for debugging
+        try:
+            error_data = {
+                "content": content[:500] if content else "None",  # Store first 500 chars for debugging
+                "agent_name": agent_name,
+                "user_id": user_id,
+                "topic_id": topic_id,
+                "llm_provider": llm_provider,
+                "llm_model": llm_model,
+                "content_status": "error",
+                "error_message": str(e),
+                "timestamp": firestore.SERVER_TIMESTAMP
+            }
+            error_col = db.collection("storage_errors")
+            error_doc_ref = error_col.document()
+            error_doc_ref.set(error_data)
+            logging.info(f"Error data stored for debugging with ID: {error_doc_ref.id}")
+        except Exception as debug_error:
+            logging.error(f"Failed to store error data: {debug_error}")
+        
         raise RuntimeError("Failed to write agent response to database") from e
 
 async def store_agent_response_legacy(response: DatabaseModel) -> str:
@@ -122,7 +164,7 @@ async def get_agent_responses(
         docs = await asyncio.to_thread(_query)
         responses = []
         for d in docs:
-            # Return the full document data including agent_name and tags for UI display
+            # Return the full document data including agent_name, tags, and LLM info for UI display
             response_data = {
                 "content": d.get("content", ""),
                 "agent_name": d.get("agent_name", "Unknown"),
@@ -130,7 +172,11 @@ async def get_agent_responses(
                 "user_id": d.get("user_id"),
                 "response_id": d.get("response_id"),
                 "timestamp": d.get("timestamp"),
-                "tags": d.get("tags", [])
+                "tags": d.get("tags", []),
+                "llm_provider": d.get("llm_provider"),
+                "llm_model": d.get("llm_model"),
+                "content_length": d.get("content_length"),
+                "content_status": d.get("content_status", "unknown")
             }
             responses.append(response_data)
         return responses
@@ -300,7 +346,8 @@ def generate_tags_from_content(content: str, max_tags: int = 20) -> List[str]:
             'my', 'your', 'his', 'her', 'its', 'our', 'their', 'what', 'which', 'who',
             'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more',
             'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same',
-            'so', 'than', 'too', 'very', 'just', 'now', 'here', 'there', 'then'
+            'so', 'than', 'too', 'very', 'just', 'now', 'here', 'there', 'then', 'type', 
+            'object', 'properties', 'type object properties', 'type object', 'object properties'
         }
         
         # Split into words and filter

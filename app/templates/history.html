@@ -219,6 +219,75 @@
             font-weight: 600;
         }
 
+        .llm-info {
+            display: flex;
+            gap: 6px;
+            margin-top: 5px;
+        }
+
+        .llm-provider {
+            background: #28a745;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .llm-model {
+            background: #17a2b8;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+        }
+
+        .content-status {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: auto;
+        }
+
+        .content-status.valid {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .content-status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .content-status.unknown {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .response-metadata {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .content-length {
+            background: #6c757d;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+        }
+
         .timestamp {
             color: #666;
             font-size: 12px;
@@ -659,8 +728,12 @@
                 const topicId = response.topic_id || 'N/A';
                 const tags = response.tags || [];
                 const timestamp = response.timestamp;
+                const llmProvider = response.llm_provider || 'Unknown';
+                const llmModel = response.llm_model || 'Unknown';
+                const contentStatus = response.content_status || 'unknown';
+                const contentLength = response.content_length || 0;
                 
-                console.log('Processed response data:', { agent, content: formattedContent.substring(0, 50), topicId, tags, timestamp });
+                console.log('Processed response data:', { agent, content: formattedContent.substring(0, 50), topicId, tags, timestamp, llmProvider, llmModel, contentStatus });
                 
                 // Convert markdown content to HTML for display
                 const contentHtml = marked.parse(formattedContent);
@@ -676,11 +749,20 @@
                             </div>
                         </div>
                         
+                        <div class="response-metadata">
+                            <div class="llm-info">
+                                <span class="llm-provider" title="LLM Provider">${llmProvider}</span>
+                                <span class="llm-model" title="Model ID">Model ${llmModel}</span>
+                            </div>
+                            <span class="content-length" title="Content Length">${contentLength} chars</span>
+                            <span class="content-status ${contentStatus}" title="Content Status">${contentStatus.toUpperCase()}</span>
+                        </div>
+                        
                         <div class="response-content">
                             ${truncatedHtml}
                         </div>
                         
-                        <button class="view-raw-btn" onclick="showRawResponse('${response.id || Date.now()}', ${JSON.stringify(formattedContent).replace(/"/g, '&quot;')}, '${agent}', '${topicId}')">
+                        <button class="view-raw-btn" onclick="showRawResponse('${response.response_id || response.id || Date.now()}', ${JSON.stringify(formattedContent).replace(/"/g, '&quot;')}, '${agent}', '${topicId}', '${llmProvider}', '${llmModel}', '${contentStatus}')">
                             📄 View Raw Response
                         </button>
                         
@@ -782,13 +864,13 @@
         document.getElementById('limitFilter').addEventListener('change', loadResponses);
 
         // Modal functions
-        function showRawResponse(responseId, rawContent, agentName, topicId) {
+        function showRawResponse(responseId, rawContent, agentName, topicId, llmProvider = 'Unknown', llmModel = 'Unknown', contentStatus = 'unknown') {
             const modal = document.getElementById('rawResponseModal');
             const modalTitle = document.getElementById('modalTitle');
             const rawContentDiv = document.getElementById('rawContent');
             
-            // Set modal title with response info
-            modalTitle.textContent = `Raw Response - ${agentName} (Topic: ${topicId})`;
+            // Set modal title with response info including LLM details
+            modalTitle.textContent = `Raw Response - ${agentName} | ${llmProvider}/Model-${llmModel} | Status: ${contentStatus.toUpperCase()} | Topic: ${topicId}`;
             
             // Set raw content
             rawContentDiv.textContent = rawContent;

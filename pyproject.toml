@@ -24,6 +24,7 @@ debugpy = "^1.8.15"
 beautifulsoup4 = "^4.13.5"
 aiohttp = "^3.12.15"
 firebase-admin = "6.9.0"
+python-multipart = "^0.0.20"
 
 [build-system]
 requires = ["poetry-core"]

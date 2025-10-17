@@ -5,9 +5,10 @@ CAL - Collaborative AI Layer
 import logging
 import os
 from typing import List, Optional
+from datetime import datetime
 
 import uvicorn
-from fastapi import FastAPI, Query, Request
+from fastapi import FastAPI, Query, Request, UploadFile, File, Form, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
@@ -36,6 +37,8 @@ from .storage.firestore_db import (
     update_report_section,
     delete_report,
 )
+from .storage.document_repository import DocumentRepository
+from .utils.document_processor import DocumentProcessor
 from .utils.llm_counter import llm_call_counter, get_llm_call_counter
 from .orchestrator.agent_orchestrator import AgentOrchestrator
 from .api.response_formatter import router as formatter_router
@@ -222,6 +225,452 @@ async def get_feedback_list(
     except Exception as e:
         logger.error(f"Error retrieving feedback: {e}")
         return {"error": f"Error retrieving feedback: {str(e)}"}
+
+
+# Document Repository Upload Endpoints
+
+@app.post("/documents/upload")
+async def upload_document(
+    file: UploadFile = File(...),
+    user_id: str = Form(...),
+    description: Optional[str] = Form(None)
+):
+    """
+    Upload a reference document for processing and indexing.
+    
+    Args:
+        file: The uploaded txt file
+        user_id: User ID who is uploading the document
+        description: Optional description of the reference document
+        
+    Returns:
+        Upload result with document ID and processing status
+    """
+    try:
+        document_repository = DocumentRepository()
+        
+        if not document_repository.is_available():
+            raise HTTPException(status_code=503, detail="Document repository service unavailable")
+        
+        # Read file content
+        file_content = await file.read()
+        filename = file.filename or "document.txt"
+        
+        # Upload to document repository
+        upload_result = await document_repository.upload_document(
+            file_content=file_content,
+            filename=filename,
+            user_id=user_id,
+            metadata={"description": description} if description else None
+        )
+        
+        if upload_result["success"]:
+            # Trigger background processing
+            processor = DocumentProcessor()
+            processing_result = await processor.process_document(upload_result["document_id"])
+            
+            return {
+                "success": True,
+                "message": "Document uploaded and processed successfully",
+                "document_id": upload_result["document_id"],
+                "stored_filename": upload_result["stored_filename"],
+                "processing_result": processing_result
+            }
+        else:
+            raise HTTPException(status_code=400, detail=upload_result["error"])
+            
+    except Exception as e:
+        logger.error(f"Error uploading document: {e}")
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+
+
+@app.get("/documents")
+async def list_documents(
+    user_id: Optional[str] = Query(None),
+    limit: int = Query(50, le=100)
+):
+    """
+    List uploaded reference documents.
+    
+    Args:
+        user_id: Optional user ID filter
+        limit: Maximum number of documents to return
+        
+    Returns:
+        List of uploaded reference documents
+    """
+    try:
+        document_repository = DocumentRepository()
+        
+        if not document_repository.is_available():
+            return {"documents": [], "message": "Document repository service unavailable"}
+        
+        documents = await document_repository.list_documents(user_id=user_id, limit=limit)
+        
+        return {
+            "success": True,
+            "documents": documents,
+            "count": len(documents)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error listing documents: {e}")
+        return {"success": False, "error": str(e), "documents": []}
+
+
+@app.get("/feedback/files/{file_id}")
+async def get_feedback_file(file_id: str):
+    """
+    Get a specific feedback file by ID.
+    
+    Args:
+        file_id: The file ID to retrieve
+        
+    Returns:
+        File information and content
+    """
+    try:
+        cloud_storage = FeedbackCloudStorage()
+        
+        if not cloud_storage.is_available():
+            raise HTTPException(status_code=503, detail="Cloud storage service unavailable")
+        
+        file_info = await cloud_storage.get_feedback_file(file_id)
+        
+        if file_info:
+            return {
+                "success": True,
+                "file_info": file_info
+            }
+        else:
+            raise HTTPException(status_code=404, detail="File not found")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting feedback file {file_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/feedback/files/{file_id}")
+async def delete_feedback_file(file_id: str):
+    """
+    Delete a feedback file by ID.
+    
+    Args:
+        file_id: The file ID to delete
+        
+    Returns:
+        Deletion result
+    """
+    try:
+        cloud_storage = FeedbackCloudStorage()
+        
+        if not cloud_storage.is_available():
+            raise HTTPException(status_code=503, detail="Cloud storage service unavailable")
+        
+        success = await cloud_storage.delete_feedback_file(file_id)
+        
+        if success:
+            return {
+                "success": True,
+                "message": "File deleted successfully"
+            }
+        else:
+            raise HTTPException(status_code=404, detail="File not found")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting feedback file {file_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/feedback/files/{file_id}/process")
+async def process_feedback_file(file_id: str):
+    """
+    Manually trigger processing of a feedback file.
+    
+    Args:
+        file_id: The file ID to process
+        
+    Returns:
+        Processing result
+    """
+    try:
+        processor = FeedbackFileProcessor()
+        result = await processor.process_feedback_file(file_id)
+        
+        return {
+            "success": result["success"],
+            "message": "Processing completed" if result["success"] else result.get("error", "Processing failed"),
+            "result": result
+        }
+        
+    except Exception as e:
+        logger.error(f"Error processing feedback file {file_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/feedback/files/processed")
+async def list_processed_feedback_files():
+    """
+    List all processed feedback files.
+    
+    Returns:
+        List of processed files with metadata
+    """
+    try:
+        cloud_storage = FeedbackCloudStorage()
+        
+        if not cloud_storage.is_available():
+            return {"files": [], "message": "Cloud storage service unavailable"}
+        
+        files = await cloud_storage.list_processed_files()
+        
+        return {
+            "success": True,
+            "processed_files": files,
+            "count": len(files)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error listing processed feedback files: {e}")
+        return {"success": False, "error": str(e), "processed_files": []}
+
+
+@app.get("/feedback/pipeline/validate")
+async def validate_feedback_pipeline():
+    """
+    Validate the feedback processing pipeline.
+    
+    Returns:
+        Pipeline validation results
+    """
+    try:
+        processor = FeedbackFileProcessor()
+        validation_result = await processor.validate_processing_pipeline()
+        
+        return {
+            "success": True,
+            "validation": validation_result
+        }
+        
+    except Exception as e:
+        logger.error(f"Error validating feedback pipeline: {e}")
+        return {"success": False, "error": str(e)}
+
+
+@app.post("/feedback/pipeline/process-pending")
+async def process_pending_feedback_files():
+    """
+    Automatically process any pending feedback files.
+    This is the automatic processing trigger for uploaded files.
+    
+    Returns:
+        Processing results for all pending files
+    """
+    try:
+        cloud_storage = FeedbackCloudStorage()
+        processor = FeedbackFileProcessor()
+        
+        if not cloud_storage.is_available():
+            return {"success": False, "error": "Cloud storage service unavailable"}
+        
+        # Get validation to find pending files
+        validation = await processor.validate_processing_pipeline()
+        pending_files = validation.get("pending_files", [])
+        
+        if not pending_files:
+            return {
+                "success": True,
+                "message": "No pending files to process",
+                "processed_count": 0,
+                "results": []
+            }
+        
+        # Process pending files
+        file_ids = [f["file_id"] for f in pending_files]
+        results = await processor.batch_process_files(file_ids)
+        
+        processed_count = sum(1 for r in results if r.get("success"))
+        failed_count = len(results) - processed_count
+        
+        return {
+            "success": True,
+            "message": f"Processing complete: {processed_count} successful, {failed_count} failed",
+            "processed_count": processed_count,
+            "failed_count": failed_count,
+            "results": results
+        }
+        
+    except Exception as e:
+        logger.error(f"Error processing pending feedback files: {e}")
+        return {"success": False, "error": str(e)}
+
+
+@app.get("/feedback/pipeline/status")
+async def get_feedback_pipeline_status():
+    """
+    Get comprehensive status of the feedback processing pipeline.
+    
+    Returns:
+        Complete pipeline status including files, processing stats, and health
+    """
+    try:
+        cloud_storage = FeedbackCloudStorage()
+        processor = FeedbackFileProcessor()
+        
+        if not cloud_storage.is_available():
+            return {
+                "success": False,
+                "error": "Cloud storage service unavailable",
+                "status": "offline"
+            }
+        
+        # Get comprehensive validation data
+        validation = await processor.validate_processing_pipeline()
+        
+        # Get file lists
+        uploaded_files = await cloud_storage.list_feedback_files()
+        processed_files = await cloud_storage.list_processed_files()
+        
+        # Calculate health metrics
+        total_uploaded = len(uploaded_files)
+        total_processed = len(processed_files)
+        pending_count = validation.get("pending_processing_count", 0)
+        
+        processing_rate = (total_processed / total_uploaded * 100) if total_uploaded > 0 else 0
+        
+        status = {
+            "success": True,
+            "status": "healthy" if processing_rate > 80 else "warning" if processing_rate > 50 else "unhealthy",
+            "timestamp": datetime.now().isoformat(),
+            
+            "file_counts": {
+                "uploaded_files": total_uploaded,
+                "processed_files": total_processed,
+                "pending_processing": pending_count,
+                "processing_rate_percentage": round(processing_rate, 2)
+            },
+            
+            "feedback_statistics": {
+                "total_feedback_entries": validation.get("total_feedback_entries", 0),
+                "categories_distribution": validation.get("categories_distribution", {}),
+            },
+            
+            "recent_activity": {
+                "recent_uploads": [f for f in uploaded_files[:5]],  # Last 5 uploads
+                "recent_processed": [f for f in processed_files[:5]]  # Last 5 processed
+            },
+            
+            "system_health": {
+                "cloud_storage_available": cloud_storage.is_available(),
+                "processing_pipeline_functional": True,
+                "feedback_integration_active": True
+            }
+        }
+        
+        return status
+        
+    except Exception as e:
+        logger.error(f"Error getting feedback pipeline status: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "status": "error",
+            "timestamp": datetime.now().isoformat()
+        }
+
+
+@app.post("/feedback/pipeline/test")
+async def test_feedback_pipeline():
+    """
+    Test the complete feedback pipeline with a sample file.
+    
+    Returns:
+        Test results showing pipeline functionality
+    """
+    try:
+        cloud_storage = FeedbackCloudStorage()
+        processor = FeedbackFileProcessor()
+        
+        if not cloud_storage.is_available():
+            return {"success": False, "error": "Cloud storage service unavailable"}
+        
+        # Create test feedback content
+        test_content = """
+Test Feedback for Pipeline Validation
+
+1. Presentation Feedback:
+The presentation was too verbose and could be more concise. Focus on key points and reduce technical jargon when speaking to business audiences.
+
+2. Technical Accuracy:
+Ensure all technical specifications are verified and include proper sources. Double-check calculations and measurements before presenting.
+
+3. Business Focus:
+Need to emphasize the business value and ROI more clearly. Connect technical features to customer benefits and revenue opportunities.
+        """.strip()
+        
+        test_filename = f"test_pipeline_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+        
+        # Upload test file
+        upload_result = await cloud_storage.upload_feedback_file(
+            file_content=test_content.encode('utf-8'),
+            filename=test_filename,
+            user_id="pipeline_test",
+            metadata={"test": True, "pipeline_validation": True}
+        )
+        
+        if not upload_result["success"]:
+            return {
+                "success": False,
+                "error": f"Test file upload failed: {upload_result['error']}",
+                "stage": "upload"
+            }
+        
+        # Process test file
+        file_id = upload_result["file_id"]
+        processing_result = await processor.process_feedback_file(file_id)
+        
+        if not processing_result["success"]:
+            return {
+                "success": False,
+                "error": f"Test file processing failed: {processing_result['error']}",
+                "stage": "processing",
+                "file_id": file_id
+            }
+        
+        # Verify processed file exists
+        processed_files = await cloud_storage.list_processed_files()
+        test_processed = any(f.get("original_file_id") == file_id for f in processed_files)
+        
+        # Clean up test file
+        cleanup_success = await cloud_storage.delete_feedback_file(file_id)
+        
+        return {
+            "success": True,
+            "message": "Pipeline test completed successfully",
+            "test_results": {
+                "upload_successful": True,
+                "processing_successful": True,
+                "processed_file_created": test_processed,
+                "sections_processed": processing_result.get("sections_count", 0),
+                "dominant_category": processing_result.get("dominant_category", "unknown"),
+                "file_tags": processing_result.get("file_tags", []),
+                "cleanup_successful": cleanup_success
+            },
+            "file_id": file_id,
+            "test_filename": test_filename
+        }
+        
+    except Exception as e:
+        logger.error(f"Error testing feedback pipeline: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "stage": "unknown"
+        }
 
 
 @app.get("/simple-report-generator")

@@ -16,6 +16,7 @@ except ImportError:
 from ..storage.firestore_db import get_agent_responses, get_feedback
 from ..orchestrator.agent_capabilities import get_feedback_categories_for_agent, FEEDBACK_CATEGORIES
 from .relevance_scorer import RelevanceScorer, FeedbackEntry
+from ..utils.feedback_processor import FeedbackFileProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,7 @@ class FeedbackContextManager:
         self.cache_expiry = timedelta(hours=1)
         self.relevance_scorer = RelevanceScorer()
         self.parsed_feedback_entries = None
-        self._load_feedback_data()
+        self._feedback_loaded = False
     
     async def get_relevant_feedback(self, 
                                   task_type: str, 
@@ -44,9 +45,10 @@ class FeedbackContextManager:
             # Load feedback from both static files and Firestore
             all_feedback_entries = []
             
-            # 1. Load from static feedback.txt file
-            if not self.parsed_feedback_entries:
-                self._load_feedback_data()
+            # 1. Load from processed files and static feedback if not already loaded
+            if not self._feedback_loaded:
+                await self._load_feedback_data()
+                self._feedback_loaded = True
             
             if self.parsed_feedback_entries:
                 all_feedback_entries.extend(self.parsed_feedback_entries)
@@ -171,18 +173,29 @@ class FeedbackContextManager:
         
         return "\n".join(context_parts)
     
-    def _load_feedback_data(self):
+    async def _load_feedback_data(self):
         """
-        Load and parse feedback data from Google Cloud Storage
+        Load and parse feedback data from multiple sources including processed cloud storage files
         """
         try:
-            # Configuration for GCS bucket and blob
-            bucket_name = "api-project-371618.appspot.com"
-            blob_path = "resources/feedback.txt"
+            all_feedback_entries = []
             
-            # Try to fetch feedback from Google Cloud Storage
+            # 1. Load from processed feedback files (NEW FEATURE)
+            try:
+                processor = FeedbackFileProcessor()
+                processed_entries = await processor.get_processed_feedback_entries()
+                all_feedback_entries.extend(processed_entries)
+                logger.info(f"Loaded {len(processed_entries)} feedback entries from processed cloud storage files")
+            except Exception as e:
+                logger.warning(f"Could not load processed feedback files: {e}")
+            
+            # 2. Load from static feedback.txt file (LEGACY SUPPORT)
             if STORAGE_AVAILABLE:
                 try:
+                    # Configuration for GCS bucket and blob
+                    bucket_name = "api-project-371618.appspot.com"
+                    blob_path = "resources/feedback.txt"
+                    
                     # Initialize the Storage client (uses ADC automatically)
                     client = storage.Client()
                     bucket = client.bucket(bucket_name)
@@ -191,31 +204,38 @@ class FeedbackContextManager:
                     # Download the blob content as text
                     feedback_text = blob.download_as_text(encoding='utf-8')
                     
-                    self.parsed_feedback_entries = self.relevance_scorer.parse_feedback_from_text(feedback_text)
-                    logger.info(f"Loaded {len(self.parsed_feedback_entries)} feedback entries from Google Cloud Storage")
-                    return
+                    static_entries = self.relevance_scorer.parse_feedback_from_text(feedback_text)
+                    all_feedback_entries.extend(static_entries)
+                    logger.info(f"Loaded {len(static_entries)} feedback entries from static feedback.txt")
                     
                 except Exception as e:
-                    logger.error(f"Failed to fetch feedback from Google Cloud Storage: {e}")
+                    logger.error(f"Failed to fetch static feedback from Google Cloud Storage: {e}")
             else:
                 logger.warning("Google Cloud Storage client not available")
             
-            # Fallback to local file if cloud storage fails
-            feedback_file_path = os.path.join(
-                os.path.dirname(__file__), 
-                "..", "resources", "templates", "feedback.txt"
-            )
-            
-            if os.path.exists(feedback_file_path):
-                logger.info("Falling back to local feedback file")
-                with open(feedback_file_path, 'r', encoding='utf-8') as f:
-                    feedback_text = f.read()
+            # 3. Fallback to local file if cloud storage fails
+            if not all_feedback_entries:
+                feedback_file_path = os.path.join(
+                    os.path.dirname(__file__), 
+                    "..", "resources", "templates", "feedback.txt"
+                )
                 
-                self.parsed_feedback_entries = self.relevance_scorer.parse_feedback_from_text(feedback_text)
-                logger.info(f"Loaded {len(self.parsed_feedback_entries)} feedback entries from local fallback")
+                if os.path.exists(feedback_file_path):
+                    logger.info("Falling back to local feedback file")
+                    with open(feedback_file_path, 'r', encoding='utf-8') as f:
+                        feedback_text = f.read()
+                    
+                    fallback_entries = self.relevance_scorer.parse_feedback_from_text(feedback_text)
+                    all_feedback_entries.extend(fallback_entries)
+                    logger.info(f"Loaded {len(fallback_entries)} feedback entries from local fallback")
+            
+            # Store all entries
+            self.parsed_feedback_entries = all_feedback_entries
+            
+            if not self.parsed_feedback_entries:
+                logger.warning("No feedback entries available from any source")
             else:
-                logger.warning("No feedback source available (cloud storage failed and local file not found)")
-                self.parsed_feedback_entries = []
+                logger.info(f"Total feedback entries loaded: {len(self.parsed_feedback_entries)} from all sources")
                 
         except Exception as e:
             logger.error(f"Error loading feedback data: {e}")
