@@ -38,13 +38,29 @@ from .storage.firestore_db import (
     delete_report,
 )
 from .storage.document_repository import DocumentRepository
+from .storage.cloud_storage import FeedbackCloudStorage, get_storage_file_content
 from .utils.document_processor import DocumentProcessor
-from .utils.llm_counter import llm_call_counter, get_llm_call_counter
+from .utils.feedback_processor import FeedbackFileProcessor
+from contextlib import asynccontextmanager
 from .orchestrator.agent_orchestrator import AgentOrchestrator
 from .api.response_formatter import router as formatter_router
 
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Load the market research template from cloud storage on startup
+    template_path = "resources/market_research.txt"
+    app.state.market_research_template = await get_storage_file_content(template_path)
+    if not app.state.market_research_template:
+        logger.error("Market research template file not found at %s", template_path)
+        app.state.market_research_template = (
+            "Market research template not found. Please check the file path."
+        )
+    yield
+    # Clean up resources if needed on shutdown
+
+
+app = FastAPI(lifespan=lifespan)
 
 # Include the response formatter router
 app.include_router(formatter_router, prefix="/api", tags=["formatting"])
@@ -58,18 +74,6 @@ app.mount(
     StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")),
     name="static",
 )
-# Load the market research template from file
-try:
-    template_path = os.path.join(
-        os.path.dirname(__file__), "resources", "templates", "market_research.txt"
-    )
-    with open(template_path, "r", encoding="utf-8") as f:
-        MARKET_RESEARCH_TEMPLATE = f.read()
-except FileNotFoundError:
-    logger.error("Market research template file not found at %s", template_path)
-    MARKET_RESEARCH_TEMPLATE = (
-        "Market research template not found. Please check the file path."
-    )
 
 
 @app.get("/")
@@ -81,7 +85,10 @@ async def read_root(request: Request):
 async def market_research_page(request: Request):
     return templates.TemplateResponse(
         "market_research.html",
-        {"request": request, "market_research_template": MARKET_RESEARCH_TEMPLATE},
+        {
+            "request": request,
+            "market_research_template": request.app.state.market_research_template,
+        },
     )
 
 
@@ -763,7 +770,7 @@ Using the Calnetix Defense & Power Systems Market Intelligence Report template, 
 Report Topic: {request.title}
 Report Description: {request.description or 'Market research and analysis report for Calnetix Defense & Power Systems'}
 
-Template Context: {MARKET_RESEARCH_TEMPLATE}
+Template Context: {app.state.market_research_template}
 
 Please generate comprehensive, professional content for the "{section.title}" section that follows the template requirements:
 

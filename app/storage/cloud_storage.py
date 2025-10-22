@@ -416,3 +416,32 @@ class FeedbackCloudStorage:
         except Exception as e:
             logger.error(f"Error getting processed file content {filename}: {e}")
             return None
+
+
+async def get_storage_file_content(file_path: str) -> Optional[str]:
+    """
+    Get the content of a file from cloud storage.
+
+    Args:
+        file_path: The full path to the file in the bucket.
+
+    Returns:
+        File content as a string, or None if not found.
+    """
+    if not STORAGE_AVAILABLE:
+        logger.warning("Google Cloud Storage client not available")
+        return None
+
+    try:
+        storage_client = storage.Client()
+        bucket = storage_client.bucket("api-project-371618.appspot.com")
+        blob = bucket.blob(file_path)
+
+        if await blob.exists():
+            return await blob.download_as_text(encoding='utf-8')
+        else:
+            logger.error(f"File not found in cloud storage at path: {file_path}")
+            return None
+    except Exception as e:
+        logger.error(f"Error getting file from cloud storage {file_path}: {e}")
+        return None
