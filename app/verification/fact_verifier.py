@@ -273,14 +273,14 @@ class FactVerificationEngine:
                         reliability_scores[url] = reliability
                         
                         # Update source tracker
-                        self.source_tracker.update_source_reliability(url, reliability, True)
+                        await self.source_tracker.update_source_reliability(url, reliability, True)
                         
                     else:
                         broken_links.append(url)
                         verification_notes.append(f"Broken link: {url}")
                         
                         # Update source tracker for broken link
-                        self.source_tracker.update_source_reliability(url, 0.0, False)
+                        await self.source_tracker.update_source_reliability(url, 0.0, False)
                         
                 except Exception as e:
                     logger.warning(f"Error verifying URL {url}: {e}")

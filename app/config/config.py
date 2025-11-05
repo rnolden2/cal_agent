@@ -1,8 +1,11 @@
+import asyncio
 import orjson
 import os
 from openai import OpenAI
 from google import genai
-from ..models.model_list import openai_models, google_models, perplexity_models
+from xai_sdk import Client
+from xai_sdk.chat import user, system
+from ..models.model_list import openai_models, google_models, perplexity_models, xai_models
 from ..agent_schema.agent_master_schema import AgentModel
 from google.cloud import secretmanager
 import httpx
@@ -173,3 +176,33 @@ class PerplexityClient:
             raise RuntimeError(f"Perplexity API request failed: {e}") from e
         except Exception as e:
             raise RuntimeError(f"Perplexity prediction failed: {e}") from e
+
+class XAIClient:
+    def __init__(self):
+        self.api_key = get_secret("XAI_API_KEY")  # Assuming get_secret is available
+        self.client = Client(api_key=self.api_key, timeout=3600)
+        self.model = None
+
+    def load_model(self, model: int):
+        try:
+            if model:
+                self.model = xai_models[model]
+            else:
+                self.model = xai_models[0]
+        except IndexError:
+            raise ValueError(
+                f"Invalid model index: {model}. Must be within the range of available XAI models."
+            )
+        except Exception as e:
+            raise RuntimeError(f"Failed to load XAI model: {e}")
+
+    async def predict(self, agent: AgentModel):
+        try:
+            self.load_model(agent.model)
+            chat = self.client.chat.create(model=self.model)
+            chat.append(system(agent.role))
+            chat.append(user(agent.content))
+            response = await asyncio.to_thread(chat.sample)
+            return response.content
+        except Exception as e:
+            raise RuntimeError(f"XAI prediction failed: {e}")

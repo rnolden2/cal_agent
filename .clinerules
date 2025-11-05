@@ -1,0 +1,28 @@
+# Project Guidelines
+
+## Documentation Requirements
+
+-   Update relevant documentation in /docs when modifying features
+-   Keep README.md in sync with new capabilities
+-   Maintain changelog entries in CHANGELOG.md
+-   Do not run or test the application without asking first
+
+## Architecture Decision Records
+
+
+## Code Style & Patterns
+
+-   Use functions/scripts for repetitive tasks to avoid manual file-by-file changes.
+
+## Testing Standards
+
+## Avoid
+
+- Avoid reading the following files and directories
+.env
+.idea
+.readmes
+.venv
+.vscode
+/app/__pycache__
+/app/config/api-project.json

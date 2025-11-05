@@ -3,7 +3,7 @@ import logging
 from typing import Dict
 
 from ..agent_schema.agent_master_schema import AgentModel, DatabaseModel, Provider
-from ..config.config import GoogleClient, OpenAIClient, PerplexityClient
+from ..config.config import GoogleClient, OpenAIClient, PerplexityClient, XAIClient
 from ..utils.llm_counter import increment_llm_call_counter
 
 
@@ -14,6 +14,7 @@ async def callModel(agent: AgentModel) -> str:
             Provider.GOOGLE: GoogleClient,
             Provider.OPENAI: OpenAIClient,
             Provider.PERPLEXITY: PerplexityClient,
+            Provider.XAI: XAIClient,
         }
         client_class = provider_clients.get(agent.provider) or GoogleClient
         client = client_class()  # Instantiate the client

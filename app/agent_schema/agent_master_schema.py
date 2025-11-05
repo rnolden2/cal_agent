@@ -20,6 +20,7 @@ class Provider(str, Enum):  # Enum for provider
     OPENAI = "openai"
     GOOGLE = "google"
     PERPLEXITY = "perplexity"
+    XAI = "xai"
 
 
 class AgentCallModel(BaseModel):

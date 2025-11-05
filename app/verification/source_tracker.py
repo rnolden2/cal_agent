@@ -140,7 +140,7 @@ class SourceReliabilityTracker:
             logger.error(f"Error getting source reliability for {url}: {e}")
             return None
     
-    def update_source_reliability(self, url: str, reliability_score: float, 
+    async def update_source_reliability(self, url: str, reliability_score: float, 
                                 accessible: bool, response_time: float = 0.0,
                                 status_code: Optional[int] = None,
                                 content_quality: float = 0.5,
@@ -207,7 +207,7 @@ class SourceReliabilityTracker:
             self.verification_events.append(event)
             
             # Store updated records
-            self._store_source_records()
+            await self._store_source_records()
             
             logger.debug(f"Updated reliability for {url}: {self.source_records[url].reliability_score:.3f}")
             

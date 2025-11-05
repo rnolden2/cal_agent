@@ -50,7 +50,7 @@ from .api.response_formatter import router as formatter_router
 async def lifespan(app: FastAPI):
     # Load the market research template from cloud storage on startup
     template_path = "resources/market_research.txt"
-    app.state.market_research_template = await get_storage_file_content(template_path)
+    app.state.market_research_template = get_storage_file_content(template_path)
     if not app.state.market_research_template:
         logger.error("Market research template file not found at %s", template_path)
         app.state.market_research_template = (
@@ -1012,7 +1012,7 @@ async def delete_report_by_id(report_id: str):
         else:
             return {"success": False, "message": "Failed to delete report"}
     except Exception as e:
-        logger.error(f"Error deleting report: {e}")
+        logging.error(f"Error deleting report: {e}")
         return {"success": False, "message": f"Error deleting report: {str(e)}"}
 
 
@@ -1046,6 +1046,39 @@ async def email_report(report_id: str, email_request: dict):
     except Exception as e:
         logger.error(f"Error sending report email: {e}")
         return {"success": False, "message": f"Error sending report email: {str(e)}"}
+
+
+@app.post("/generate-market-research")
+async def generate_market_research(request: Request):
+    """
+    Generate market research report based on topic and template.
+    """
+    try:
+        data = await request.json()
+        topic = data.get("topic")
+        template = data.get("template")
+        
+        if not topic or not template:
+            raise HTTPException(status_code=400, detail="Topic and template are required")
+        
+        # Use orchestrator to generate the report
+        orchestrator = AgentOrchestrator()
+        agent_request = AgentCallModel(
+            provider="openai",  # or appropriate provider
+            model=1,  # appropriate model
+            response=template,  # the processed template is the prompt
+            additional_context=f"Generate market research report for topic: {topic}",
+            user_id="user",  # placeholder, adjust as needed
+            topic_id=None
+        )
+        
+        response = await orchestrator.process_request(agent_request)
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error generating market research: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":

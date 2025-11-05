@@ -418,7 +418,7 @@ class FeedbackCloudStorage:
             return None
 
 
-async def get_storage_file_content(file_path: str) -> Optional[str]:
+def get_storage_file_content(file_path: str) -> Optional[str]:
     """
     Get the content of a file from cloud storage.
 
@@ -436,9 +436,10 @@ async def get_storage_file_content(file_path: str) -> Optional[str]:
         storage_client = storage.Client()
         bucket = storage_client.bucket("api-project-371618.appspot.com")
         blob = bucket.blob(file_path)
+        print(f"Attempting to retrieve file from path: {file_path}")
 
-        if await blob.exists():
-            return await blob.download_as_text(encoding='utf-8')
+        if blob.exists():
+            return blob.download_as_text(encoding='utf-8')
         else:
             logger.error(f"File not found in cloud storage at path: {file_path}")
             return None

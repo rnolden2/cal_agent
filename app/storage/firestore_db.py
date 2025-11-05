@@ -18,6 +18,8 @@ async def store_agent_response(content: str, user_id: str, agent_name: str, topi
                               llm_provider: Optional[str] = None, llm_model: Optional[str] = None) -> str:
     """Store individual agent response in Firestore database with auto-generated tags and LLM tracking."""
     try:
+        if isinstance(content, bytes):
+            content = content.decode('utf-8')
         # Validate content before storing
         if not content or content.strip() == "":
             raise ValueError(f"Empty content detected for agent {agent_name}")
@@ -30,10 +32,12 @@ async def store_agent_response(content: str, user_id: str, agent_name: str, topi
         ]
         
         content_lower = content.lower().strip()
+        is_corrupted = False
         for pattern in corrupted_patterns:
             if pattern.lower() in content_lower:
                 logging.warning(f"Detected potentially corrupted content for agent {agent_name}: {content[:100]}")
-                raise ValueError(f"Corrupted content pattern detected for agent {agent_name}")
+                is_corrupted = True
+                break
         
         col = db.collection("agent_responses")
         doc_ref = col.document()
@@ -52,7 +56,7 @@ async def store_agent_response(content: str, user_id: str, agent_name: str, topi
             "llm_provider": llm_provider,
             "llm_model": llm_model,
             "content_length": len(content),
-            "content_status": "valid",
+            "content_status": "corrupted" if is_corrupted else "valid",
             "timestamp": firestore.SERVER_TIMESTAMP
         }
         
