@@ -76,16 +76,20 @@ class FirestoreTester:
                 "provider": "openai"
             }
             content = orjson.dumps(test_data).decode()
-            db_model = DatabaseModel(content=content, topic_id=topic_id, user_id=user_id, agent_name="test_agent")
             
-            response_id = await store_agent_response(db_model)
+            response_id = await store_agent_response(
+                content=content,
+                user_id=user_id,
+                agent_name="test_agent",
+                topic_id=topic_id
+            )
             assert response_id is not None
             
             await asyncio.sleep(1)
             
             retrieved_responses = await get_agent_responses(topic_id=topic_id, user_id=user_id, limit=1)
             assert len(retrieved_responses) == 1
-            assert orjson.loads(retrieved_responses[0].content) == test_data
+            assert orjson.loads(retrieved_responses[0]['content']) == test_data
             
             self.test_results["agent_responses_collection"] = {"success": True, "message": "CRUD operations successful"}
         except Exception as e:
@@ -174,8 +178,13 @@ class FirestoreTester:
             
             for i, agent_name in enumerate(agents):
                 content = orjson.dumps({"agent_name": agent_name, "sequence": i}).decode()
-                db_model = DatabaseModel(content=content, topic_id=topic_id, user_id=user_id, agent_name=agent_name)
-                response_id = await store_agent_response(db_model)
+                
+                response_id = await store_agent_response(
+                    content=content,
+                    user_id=user_id,
+                    agent_name=agent_name,
+                    topic_id=topic_id
+                )
                 response_ids.append(response_id)
             
             await asyncio.sleep(1)
@@ -198,12 +207,17 @@ class FirestoreTester:
         feedback_ids = []
         try:
             # Empty content
-            response_id = await store_agent_response(DatabaseModel(content="{}", topic_id="t", user_id="u"))
+            response_id = await store_agent_response(content="{}", user_id="u", agent_name="test", topic_id="t")
             response_ids.append(response_id)
             
             # Large content
             large_content = orjson.dumps({"response": "x" * 1000}).decode()
-            response_id = await store_agent_response(DatabaseModel(content=large_content, topic_id=f"l-{uuid.uuid4()}", user_id=f"l-{uuid.uuid4()}"))
+            response_id = await store_agent_response(
+                content=large_content,
+                user_id=f"l-{uuid.uuid4()}",
+                agent_name="test",
+                topic_id=f"l-{uuid.uuid4()}"
+            )
             response_ids.append(response_id)
             
             # Minimal feedback
@@ -230,8 +244,12 @@ class FirestoreTester:
             
             async def create_response(i):
                 content = orjson.dumps({"agent": f"c_{i}"}).decode()
-                db_model = DatabaseModel(content=content, topic_id=topic_id, user_id=user_id)
-                response_id = await store_agent_response(db_model)
+                response_id = await store_agent_response(
+                    content=content,
+                    user_id=user_id,
+                    agent_name=f"agent_{i}",
+                    topic_id=topic_id
+                )
                 response_ids.append(response_id)
             
             tasks = [create_response(i) for i in range(5)]
@@ -259,14 +277,18 @@ class FirestoreTester:
             user_id = f"legacy-test-user-{uuid.uuid4()}"
             test_data = {"agent_name": "test_agent", "response": "This is a test response."}
             content = orjson.dumps(test_data).decode()
-            db_model = DatabaseModel(content=content, topic_id=topic_id, user_id=user_id)
             
-            response_id = await store_agent_response(db_model)
+            response_id = await store_agent_response(
+                content=content,
+                user_id=user_id,
+                agent_name="test_agent",
+                topic_id=topic_id
+            )
             await asyncio.sleep(1)
             
             retrieved = await get_agent_responses(topic_id=topic_id, user_id=user_id, limit=1)
             assert len(retrieved) == 1
-            assert orjson.loads(retrieved[0].content) == test_data
+            assert orjson.loads(retrieved[0]['content']) == test_data
             
             self.test_results["legacy_read_write"] = {"success": True, "message": "Read/write successful"}
         except Exception as e:
