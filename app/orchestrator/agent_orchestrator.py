@@ -19,6 +19,17 @@ from ..orchestrator.agent_capabilities import (
 from ..llm.manager import callModel
 from ..storage.firestore_db import store_agent_response, create_topic_id
 from ..config.agent_list import AgentDescriptions
+from ..agents.customer_connect.json_schema import json_schema_customer_connect
+from ..agents.trend_tracker.json_schema import json_schema_trend_tracker
+from ..agents.rival_watcher.json_schema import json_schema_rival_watcher
+from ..agents.engineer.json_schema import json_schema_engineer
+from ..agents.sales_agent.json_schema import json_schema_sales_agent
+from ..agents.editor.json_schema import json_schema_editor
+from ..agents.tech_wiz.json_schema import json_schema_tech_wiz
+from ..agents.doc_master.json_schema import json_schema_doc_master
+from ..agents.pro_mentor.json_schema import json_schema_pro_mentor
+from ..agents.general.json_schema import json_schema_general
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -125,26 +136,28 @@ class AgentOrchestrator:
             # 4. Aggregate responses
             unified_response = self._aggregate_responses(agent_responses, required_agents)
             
-            # 5. Perform fact verification and quality assurance
+            # 5. Perform fact verification and quality assurance (non-intrusive)
+            # Check if verification is enabled (default True for backward compatibility)
+            enable_verification = getattr(request, 'enable_verification', True)
+            
             verification_required = (
-                getattr(request, 'verification_required', False) or
-                any(requires_fact_verification(agent) for agent in required_agents)
+                enable_verification and (
+                    getattr(request, 'verification_required', False) or
+                    any(requires_fact_verification(agent) for agent in required_agents)
+                )
             )
             
             quality_assessment = None
             if verification_required:
-                logger.info("Performing fact verification and quality assurance")
+                logger.info("Performing fact verification and quality assurance (informational mode)")
                 quality_assessment = await self.quality_assurance.assess_content_quality(
                     content=unified_response,
                     context=f"Task: {task_type}, Agents: {', '.join(required_agents)}"
                 )
-                
-                # If content is rejected, provide quality feedback
-                if quality_assessment.approval_status == "rejected":
-                    unified_response = self._create_quality_feedback_response(
-                        original_response=unified_response,
-                        quality_assessment=quality_assessment
-                    )
+                logger.info(f"Verification completed - Status: {quality_assessment.approval_status}, Score: {quality_assessment.overall_quality_score:.2f}")
+                # NOTE: Verification is now purely informational and does not modify content
+            elif not enable_verification:
+                logger.info("Verification disabled by request configuration")
             
             # 6. Track feedback impact if feedback was applied
             impact_metric = None
@@ -187,18 +200,27 @@ class AgentOrchestrator:
                     "improvement_indicators": impact_metric.improvement_indicators
                 }
             
-            # Add verification metrics if available
+            # Add verification metrics if available (informational only)
             if quality_assessment:
-                response_data["verification_results"] = {
+                response_data["verification_metrics"] = {
+                    "enabled": True,
                     "overall_quality_score": quality_assessment.overall_quality_score,
                     "approval_status": quality_assessment.approval_status,
                     "reliability_score": quality_assessment.verification_result.reliability_score,
                     "verified_sources_count": len(quality_assessment.verification_result.verified_sources),
                     "broken_links_count": len(quality_assessment.verification_result.broken_links),
+                    "broken_links": quality_assessment.verification_result.broken_links,
                     "verified_claims_count": len(quality_assessment.verification_result.verified_claims),
                     "unverified_claims_count": len(quality_assessment.verification_result.unverified_claims),
                     "quality_issues": quality_assessment.quality_issues,
-                    "recommendations": quality_assessment.quality_recommendations
+                    "recommendations": quality_assessment.quality_recommendations,
+                    "quality_metrics": quality_assessment.quality_metrics,
+                    "verification_timestamp": quality_assessment.assessment_timestamp.isoformat()
+                }
+            else:
+                response_data["verification_metrics"] = {
+                    "enabled": False,
+                    "message": "Verification not performed for this request"
                 }
             
             return response_data
@@ -300,7 +322,7 @@ class AgentOrchestrator:
                                             request: AgentCallModel,
                                             workflow_id: str) -> tuple[Dict[str, str], Dict[str, Dict]]:
         """
-        Execute the collaborative workflow with multiple agents
+        Execute the collaborative workflow with multiple agents in parallel
         
         Returns:
             Tuple of (agent_responses, agent_llm_info)
@@ -308,7 +330,7 @@ class AgentOrchestrator:
         agent_responses = {}
         agent_llm_info = {}
         
-        for agent_name in agents:
+        async def execute_agent(agent_name):
             try:
                 # Get agent description
                 agent_description = self._get_agent_description(agent_name)
@@ -327,12 +349,15 @@ class AgentOrchestrator:
                     "model": str(model)
                 }
                 
+                # Get the proper schema for this agent
+                agent_schema = self._get_agent_schema(agent_name)
+                
                 # Create AgentModel for the specific agent
                 agent_model = AgentModel(
                     agent=agent_name,
                     role=agent_description,
                     content=agent_prompt,
-                    agent_schema={},  # Will be populated with specific schema if needed
+                    agent_schema=agent_schema,
                     additional_context=request.additional_context,
                     model=model,
                     provider=provider.value,
@@ -342,19 +367,32 @@ class AgentOrchestrator:
                 
                 # Call the agent using the existing LLM manager
                 response = await callModel(agent_model)
-                agent_responses[agent_name] = response
-                
                 logger.info(f"Agent {agent_name} completed for workflow {workflow_id} using {provider.value}/model-{model}")
+                return agent_name, response
                 
             except Exception as e:
                 logger.error(f"Error executing agent {agent_name}: {e}")
-                agent_responses[agent_name] = f"Error: {str(e)}"
                 # Still track LLM info even if there was an error
                 if agent_name not in agent_llm_info:
                     agent_llm_info[agent_name] = {
                         "provider": "error",
                         "model": "error"
                     }
+                return agent_name, f"Error: {str(e)}"
+        
+        # Run agents in parallel with semaphore to limit concurrency (e.g., max 3 simultaneous)
+        semaphore = asyncio.Semaphore(3)
+        
+        async def bounded_execute_agent(agent_name):
+            async with semaphore:
+                return await execute_agent(agent_name)
+        
+        tasks = [bounded_execute_agent(agent) for agent in agents]
+        results = await asyncio.gather(*tasks)
+        
+        # Collect results
+        for agent_name, response in results:
+            agent_responses[agent_name] = response
         
         return agent_responses, agent_llm_info
     
@@ -377,6 +415,26 @@ class AgentOrchestrator:
         }
         
         return agent_mapping.get(agent_name, AgentDescriptions.GENERAL.value)
+    
+    def _get_agent_schema(self, agent_name: str) -> Dict:
+        """
+        Get the JSON schema for an agent
+        """
+        # Map agent names to their schemas
+        schema_mapping = {
+            "CustomerConnect": json_schema_customer_connect,
+            "TrendTracker": json_schema_trend_tracker,
+            "RivalWatcher": json_schema_rival_watcher,
+            "Engineer": json_schema_engineer,
+            "Sales": json_schema_sales_agent,
+            "Editor": json_schema_editor,
+            "TechWiz": json_schema_tech_wiz,
+            "DocumentMaster": json_schema_doc_master,
+            "ProfessionalMentor": json_schema_pro_mentor,
+            "General": json_schema_general
+        }
+        
+        return schema_mapping.get(agent_name, json_schema_general)
     
     def _create_agent_specific_prompt(self, agent_name: str, prompt: str, agent_description: str) -> str:
         """
@@ -461,36 +519,6 @@ Please provide your response based on your specific expertise and role. Focus on
         except Exception as e:
             logger.error(f"Error storing individual agent responses: {e}")
     
-    def _create_quality_feedback_response(self, original_response: str, quality_assessment) -> str:
-        """
-        Create a response that includes quality feedback when content is rejected
-        """
-        feedback_response = f"""
-# Content Quality Assessment
-
-The generated content has been reviewed and requires improvement before it can be approved.
-
-## Quality Issues Identified:
-{chr(10).join(f"• {issue}" for issue in quality_assessment.quality_issues)}
-
-## Recommendations for Improvement:
-{chr(10).join(f"• {rec}" for rec in quality_assessment.quality_recommendations)}
-
-## Quality Metrics:
-- Overall Quality Score: {quality_assessment.overall_quality_score:.2f}/1.00
-- Reliability Score: {quality_assessment.verification_result.reliability_score:.2f}/1.00
-- Verified Sources: {len(quality_assessment.verification_result.verified_sources)}
-- Broken Links: {len(quality_assessment.verification_result.broken_links)}
-- Verified Claims: {len(quality_assessment.verification_result.verified_claims)}
-- Unverified Claims: {len(quality_assessment.verification_result.unverified_claims)}
-
-## Original Response:
-{original_response}
-
----
-*This response was automatically generated by the CAL Quality Assurance System to ensure content reliability and accuracy.*
-"""
-        return feedback_response
     
     def _ensure_topic_id(self, topic_id: Optional[str]) -> str:
         """

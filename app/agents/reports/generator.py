@@ -12,27 +12,60 @@ from ...models.model_list import (
     perplexity_models,
 )
 
-async def combine_reports(aggregated_report: Dict[str, Any]) -> str:
+
+async def combine_reports(aggregated_report: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Combines reports from multiple providers into a single report using OpenAI.
+    Merges reports from multiple providers into a single JSON report.
 
     Args:
         aggregated_report: A dictionary containing the reports from all providers.
 
     Returns:
-        A string containing the combined report.
+        A dictionary containing the merged report.
     """
-    prompt = "Please synthesize the following reports into a single, comprehensive report:\n\n"
+
+    combined = {
+        "title": f"Combined Report for {aggregated_report['topic']}",
+        "executiveSummary": "",
+        "sections": [],
+        "recommendations": [],
+        "conclusion": "",
+        "metadata": {"sources": [], "date": ""}
+    }
+
+    sections_dict = {}
+    all_recommendations = []
+    all_sources = set()
+
     for report in aggregated_report["reports"]:
-        prompt += f"Provider: {report['provider']}\n"
-        prompt += f"Report: {report['response']}\n\n"
+        provider = report['provider']
+        rep = report['response']
 
-    agent_data: AgentModel = GeneralAgent.create_prompt(prompt)
-    agent_data.provider = Provider.OPENAI
-    agent_data.model = 1  # Use a powerful model for synthesis
+        combined["executiveSummary"] += f"\n\nFrom {provider}: {rep.get('executiveSummary', '')}"
 
-    combined_report = await callModel(agent=agent_data)
-    return combined_report
+        for sec in rep.get('sections', []):
+            title = sec['sectionTitle']
+            if title not in sections_dict:
+                sections_dict[title] = {
+                    "sectionTitle": title,
+                    "content": "",
+                    "subsections": []
+                }
+            sections_dict[title]["content"] += f"\n\nFrom {provider}: {sec['content']}"
+            sections_dict[title]["subsections"].extend(sec.get('subsections', []))
+
+        all_recommendations.extend(rep.get('recommendations', []))
+
+        combined["conclusion"] += f"\n\nFrom {provider}: {rep.get('conclusion', '')}"
+
+        all_sources.update(rep.get('metadata', {}).get('sources', []))
+
+    combined["sections"] = list(sections_dict.values())
+    combined["recommendations"] = all_recommendations
+    combined["metadata"]["sources"] = list(all_sources)
+    # Set date to current or leave as is
+
+    return combined
 
 
 async def generate_report_from_all_providers(
@@ -66,18 +99,14 @@ async def generate_report_from_all_providers(
                 "response": "No model configured for this provider.",
             }
 
-        prompt = f"{template}\n\nTopic: {research_request.topic}"
+        schema_str = json.dumps(json_schema_report)
+        prompt = f"{template}\n\nTopic: {research_request.topic}\n\nOutput your response strictly as JSON conforming to this schema: {schema_str}"
         agent_data: AgentModel = GeneralAgent.create_prompt(prompt)
         agent_data.provider = provider
         agent_data.model = 1
 
         response = await callModel(agent=agent_data)
-        try:
-            # Perplexity returns a JSON string, others might return text.
-            response_data = orjson.loads(response)
-        except orjson.JSONDecodeError:
-            response_data = {"content": response}
-
+        response_data = orjson.loads(response)
         return {"provider": provider.value, "response": response_data}
 
     tasks = [
@@ -91,12 +120,8 @@ async def generate_report_from_all_providers(
     for result in results:
         aggregated_report["reports"].append(result)
 
-    combined_report_str = await combine_reports(aggregated_report)
-    try:
-        combined_report_json = orjson.loads(combined_report_str)
-        aggregated_report["combined_report"] = combined_report_json
-    except orjson.JSONDecodeError:
-        aggregated_report["combined_report"] = {"content": combined_report_str}
+    combined_report = await combine_reports(aggregated_report)
+    aggregated_report["combined_report"] = combined_report
 
 
     return aggregated_report

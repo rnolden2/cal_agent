@@ -30,12 +30,8 @@ class AgentCallModel(BaseModel):
     additional_context: Optional[str] = None
     topic_id: Optional[str] = None
     user_id: str
-
-
-class ProMentorAgentResponse(BaseModel):
-    book_titles: str
-    book_published_date: str
-
+    enable_verification: bool = Field(default=True, description="Enable fact verification and quality assurance")
+    
 
 class DatabaseModel(BaseModel):
     content: Union[str, Dict]
@@ -49,24 +45,6 @@ class AgentTask(BaseModel):
     prompt: str = Field(..., description="Task-specific prompt crafted for the agent.")
     additional_context: str = Field(
         "", description="Optional additional context for the task."
-    )
-
-
-class MasterAgentModel(BaseModel):
-    content: str = Field(
-        ..., description="The content or context provided by the user."
-    )
-    timestamp: int = Field(
-        ..., description="The timestamp in milliseconds when the input was generated."
-    )
-    task_description: str = Field(
-        ..., description="Summary of tasks derived from context."
-    )
-    agents_involved: List[str] = Field(
-        ..., description="List of agent names involved in the task. Agents are"
-    )
-    tasks: List[AgentTask] = Field(
-        ..., description="Tasks routed to individual agents."
     )
 
 
@@ -96,13 +74,49 @@ class FeedbackResponse(BaseModel):
     feedback_id: Optional[str] = None
 
 
+class AgentContribution(BaseModel):
+    """Individual agent's contribution to a report section"""
+    agent_name: str = Field(..., description="Name of the agent")
+    agent_role: str = Field(..., description="Agent's role in section: primary, verification, business_analysis, etc.")
+    content: str = Field(..., description="Agent's markdown response content")
+    quality_score: float = Field(default=0.0, description="Quality assessment score (0-1)")
+    verification_status: str = Field(default="unverified", description="Verification status: verified, unverified, needs_review")
+    timestamp: Optional[datetime] = Field(default=None, description="When this contribution was generated")
+    llm_provider: Optional[str] = Field(default=None, description="LLM provider used (openai, google, perplexity, xai)")
+    llm_model: Optional[str] = Field(default=None, description="Specific model used")
+    word_count: int = Field(default=0, description="Word count of content")
+    token_count: Optional[int] = Field(default=None, description="Approximate token count")
+    feedback_applied: List[str] = Field(default_factory=list, description="List of feedback items applied")
+
+
 class ReportSection(BaseModel):
     section_id: str = Field(..., description="Unique identifier for the section")
     title: str = Field(..., description="Section title")
-    content: str = Field(..., description="Section content in markdown")
+    
+    # Hybrid storage: individual contributions + synthesized view
+    agent_contributions: List[AgentContribution] = Field(
+        default_factory=list, 
+        description="Individual agent contributions to this section"
+    )
+    synthesized_content: str = Field(
+        default="", 
+        description="Combined/synthesized content from all agent contributions"
+    )
+    synthesis_method: str = Field(
+        default="smart_merge", 
+        description="Method used to synthesize content: smart_merge, concatenate, primary_only"
+    )
+    
+    # Legacy support - kept for backwards compatibility
+    content: Optional[str] = Field(
+        default=None, 
+        description="Legacy single content field (deprecated, use synthesized_content)"
+    )
+    
     status: str = Field(default="draft", description="Section status: draft, completed, needs_revision")
-    agent_contributors: List[str] = Field(default_factory=list, description="Agents that contributed to this section")
+    agent_contributors: List[str] = Field(default_factory=list, description="List of agent names that contributed")
     last_updated: Optional[datetime] = Field(default=None, description="Last update timestamp")
+    quality_metrics: Dict[str, float] = Field(default_factory=dict, description="Quality metrics for the section")
 
 
 class ReportModel(BaseModel):
@@ -120,6 +134,9 @@ class ReportGenerationRequest(BaseModel):
     description: Optional[str] = Field(default=None, description="Report description or requirements")
     user_id: str = Field(..., description="User ID")
     sections_to_generate: List[str] = Field(default_factory=list, description="Specific sections to generate")
+    enable_verification: bool = Field(default=True, description="Enable fact verification for report sections")
+    use_parallel_processing: bool = Field(default=True, description="Enable parallel section generation")
+    custom_llm_map: Dict[str, str] = Field(default_factory=dict, description="Override LLM provider for specific sections, e.g. {'Trends': 'perplexity'}")
 
 
 class ReportResponse(BaseModel):

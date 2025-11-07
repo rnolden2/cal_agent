@@ -142,6 +142,13 @@ class PerplexityClient:
                     {"role": "system", "content": agent.role},
                     {"role": "user", "content": agent.content},
                 ],
+                "response_format": {
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "my_response",
+                        "schema": agent.agent_schema,
+                    },
+                },
                 "search_domain_filter": ["perplexity.ai"],
                 "return_images": False,
                 "return_related_questions": False,

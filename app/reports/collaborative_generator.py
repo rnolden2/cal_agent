@@ -10,7 +10,7 @@ from dataclasses import dataclass
 
 from ..orchestrator.agent_orchestrator import AgentOrchestrator
 from ..verification.quality_assurance import QualityAssuranceSystem
-from ..agent_schema.agent_master_schema import AgentCallModel, Provider
+from ..agent_schema.agent_master_schema import AgentCallModel, Provider, AgentContribution
 from .section_manager import SectionManager
 from .template_processor import TemplateProcessor
 
@@ -187,14 +187,14 @@ class CollaborativeReportGenerator:
                                               request: ReportRequest,
                                               report_id: str) -> Dict[str, Any]:
         """
-        Generate a single report section using collaborative agents
+        Generate a single report section using collaborative agents with new storage structure
         """
         try:
             # Get agent assignments for this section
             agent_assignments = self.report_section_agents.get(section_name, {})
             
-            # Create section-specific prompts for each agent
-            section_responses = {}
+            # Store individual agent contributions
+            agent_contributions = []
             agents_involved = []
             
             for role, agent_name in agent_assignments.items():
@@ -208,8 +208,9 @@ class CollaborativeReportGenerator:
                 )
                 
                 # Create agent request
+                provider = self._determine_optimal_provider(agent_name)
                 agent_request = AgentCallModel(
-                    provider=self._determine_optimal_provider(agent_name),
+                    provider=provider,
                     model=1,  # Use complex model for report generation
                     response=agent_prompt,
                     user_id=request.user_id,
@@ -220,19 +221,30 @@ class CollaborativeReportGenerator:
                 # Process through orchestrator for full verification
                 agent_response = await self.orchestrator.process_request(agent_request)
                 
-                section_responses[role] = {
-                    "agent": agent_name,
-                    "content": agent_response.get("response", ""),
-                    "quality_score": agent_response.get("quality_score", 0.0),
-                    "verification_results": agent_response.get("verification_results", {}),
-                    "feedback_applied": agent_response.get("feedback_applied", [])
-                }
+                # Create AgentContribution object
+                content = agent_response.get("response", "")
+                contribution = AgentContribution(
+                    agent_name=agent_name,
+                    agent_role=role,
+                    content=content,
+                    quality_score=agent_response.get("quality_score", 0.0),
+                    verification_status="verified" if agent_response.get("verification_results", {}).get("approved", False) else "unverified",
+                    timestamp=datetime.now(),
+                    llm_provider=provider.value,
+                    llm_model=agent_response.get("model_used", "unknown"),
+                    word_count=len(content.split()),
+                    token_count=len(content) // 4,  # Rough estimate
+                    feedback_applied=agent_response.get("feedback_applied", [])
+                )
                 
+                agent_contributions.append(contribution)
                 agents_involved.extend(agent_response.get("agents_involved", []))
             
-            # Synthesize section responses
-            synthesized_content = self._synthesize_section_responses(
-                section_name, section_responses, section_config
+            # Synthesize section responses using new method
+            synthesized_content = self._synthesize_contributions(
+                agent_contributions=agent_contributions,
+                section_name=section_name,
+                synthesis_method="smart_merge"
             )
             
             # Perform section-level quality check
@@ -241,21 +253,33 @@ class CollaborativeReportGenerator:
                 context=f"Report Section: {section_name}"
             )
             
+            # Calculate quality metrics from contributions
+            quality_metrics = {
+                "average_quality_score": sum(c.quality_score for c in agent_contributions) / len(agent_contributions) if agent_contributions else 0.0,
+                "verified_contributions": sum(1 for c in agent_contributions if c.verification_status == "verified"),
+                "total_contributions": len(agent_contributions),
+                "total_word_count": sum(c.word_count for c in agent_contributions)
+            }
+            
             return {
-                "content": synthesized_content,
-                "agent_responses": section_responses,
+                "agent_contributions": agent_contributions,
+                "synthesized_content": synthesized_content,
+                "synthesis_method": "smart_merge",
                 "agents_involved": list(set(agents_involved)),
                 "quality_assessment": section_quality,
+                "quality_metrics": quality_metrics,
                 "section_config": section_config
             }
             
         except Exception as e:
             logger.error(f"Error generating section {section_name}: {e}")
             return {
-                "content": f"Error generating section {section_name}: {str(e)}",
-                "agent_responses": {},
+                "agent_contributions": [],
+                "synthesized_content": f"Error generating section {section_name}: {str(e)}",
+                "synthesis_method": "error",
                 "agents_involved": [],
                 "quality_assessment": None,
+                "quality_metrics": {},
                 "section_config": section_config
             }
     
@@ -388,12 +412,100 @@ Please provide your contribution focusing on your specific role while ensuring a
         else:
             return Provider.OPENAI  # Default
     
+    def _synthesize_contributions(self,
+                                 agent_contributions: List[AgentContribution],
+                                 section_name: str,
+                                 synthesis_method: str = "smart_merge") -> str:
+        """
+        Synthesize multiple agent contributions into cohesive section content
+        
+        Args:
+            agent_contributions: List of AgentContribution objects
+            section_name: Name of the section
+            synthesis_method: Method to use: smart_merge, concatenate, primary_only
+            
+        Returns:
+            Synthesized markdown content
+        """
+        try:
+            if not agent_contributions:
+                return f"## {section_name.replace('_', ' ').title()}\n\nNo content available."
+            
+            # Get primary contribution
+            primary_contribution = next(
+                (c for c in agent_contributions if c.agent_role == "primary"),
+                agent_contributions[0] if agent_contributions else None
+            )
+            
+            if synthesis_method == "primary_only":
+                # Return only primary content
+                content = primary_contribution.content if primary_contribution else ""
+                
+            elif synthesis_method == "concatenate":
+                # Simple concatenation with role labels
+                parts = []
+                for contrib in agent_contributions:
+                    role_label = contrib.agent_role.replace('_', ' ').title()
+                    parts.append(f"### {role_label} ({contrib.agent_name})\n\n{contrib.content}")
+                content = "\n\n".join(parts)
+                
+            elif synthesis_method == "smart_merge":
+                # Smart merge: primary content with supporting insights integrated
+                if not primary_contribution:
+                    # Fallback to concatenate if no primary
+                    return self._synthesize_contributions(
+                        agent_contributions, section_name, "concatenate"
+                    )
+                
+                content = primary_contribution.content
+                
+                # Add supporting insights from other roles
+                supporting_insights = []
+                for contrib in agent_contributions:
+                    if contrib.agent_role != "primary" and contrib.content:
+                        # Only include substantial contributions (>100 chars)
+                        if len(contrib.content) > 100:
+                            role_label = contrib.agent_role.replace('_', ' ').title()
+                            # Check quality score to decide how to present
+                            if contrib.quality_score >= 0.8:
+                                # High quality - integrate seamlessly
+                                supporting_insights.append(
+                                    f"\n**{role_label}:** {contrib.content}"
+                                )
+                            else:
+                                # Lower quality - mark clearly
+                                supporting_insights.append(
+                                    f"\n**{role_label} (Quality: {contrib.quality_score:.2f}):** {contrib.content}"
+                                )
+                
+                if supporting_insights:
+                    content = f"{content}\n{''.join(supporting_insights)}"
+            
+            else:
+                # Unknown method, fallback to smart_merge
+                logger.warning(f"Unknown synthesis method: {synthesis_method}, using smart_merge")
+                return self._synthesize_contributions(
+                    agent_contributions, section_name, "smart_merge"
+                )
+            
+            # Add section header if not present
+            if not content.startswith("#"):
+                section_title = section_name.replace("_", " ").title()
+                content = f"## {section_title}\n\n{content}"
+            
+            return content
+            
+        except Exception as e:
+            logger.error(f"Error synthesizing contributions for {section_name}: {e}")
+            return f"## {section_name.replace('_', ' ').title()}\n\nError synthesizing content: {str(e)}"
+    
     def _synthesize_section_responses(self, 
                                     section_name: str,
                                     section_responses: Dict[str, Dict[str, Any]],
                                     section_config: Dict[str, Any]) -> str:
         """
-        Synthesize multiple agent responses into cohesive section content
+        Legacy synthesis method for backwards compatibility
+        DEPRECATED: Use _synthesize_contributions instead
         """
         try:
             # Get primary content
@@ -432,7 +544,7 @@ Please provide your contribution focusing on your specific role while ensuring a
                                report_sections: Dict[str, Dict[str, Any]],
                                template_sections: Dict[str, Any]) -> str:
         """
-        Compile all sections into complete report
+        Compile all sections into complete report using synthesized content
         """
         try:
             report_parts = []
@@ -443,15 +555,17 @@ Please provide your contribution focusing on your specific role while ensuring a
             report_parts.append(f"**Generated by:** CAL Collaborative Intelligence System")
             report_parts.append(f"**Frequency:** Monthly\n")
             
-            # Add sections in priority order
+            # Add sections in priority order using synthesized_content
             sorted_sections = sorted(
                 report_sections.items(),
                 key=lambda x: self.section_priorities.get(x[0], 999)
             )
             
             for section_name, section_data in sorted_sections:
-                if section_data.get("content"):
-                    report_parts.append(section_data["content"])
+                # Use synthesized_content (new) or fallback to content (legacy)
+                section_content = section_data.get("synthesized_content") or section_data.get("content")
+                if section_content:
+                    report_parts.append(section_content)
                     report_parts.append("")  # Add spacing
             
             # Add generation metadata

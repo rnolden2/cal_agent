@@ -41,3 +41,4 @@ docs/
 app/resources/templates/feedback.txt
 feedback.txt
 CHANGELOG.md
+app/tests/

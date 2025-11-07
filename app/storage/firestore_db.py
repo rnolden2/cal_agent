@@ -88,28 +88,6 @@ async def store_agent_response(content: str, user_id: str, agent_name: str, topi
         
         raise RuntimeError("Failed to write agent response to database") from e
 
-async def store_agent_response_legacy(response: DatabaseModel) -> str:
-    """Legacy store function for backward compatibility."""
-    try:
-        col = db.collection("agent_responses")
-        doc_ref = col.document()
-        # assuming response.content is a JSON string
-        print(f"Storing response content: {response.content}")
-        data = response.content
-        doc_ref.set(data)
-        doc_id = doc_ref.id
-        update_data = {
-            "response_id": doc_id,
-            "timestamp": firestore.SERVER_TIMESTAMP,
-            "topic_id": response.topic_id,
-            "user_id": response.user_id,
-        }
-        doc_ref.update(update_data)
-        logging.info(f"Document created with ID: {doc_id}")
-        return doc_id
-    except Exception as e:
-        logging.error(f"Error writing to Firestore: {e}", exc_info=True)
-        raise RuntimeError("Failed to write to database") from e
 
 def create_topic_id() -> str:
     """Create a document ID used as a topic_id."""
@@ -323,6 +301,69 @@ async def delete_feedback_entry(feedback_id: str):
         logging.error(f"Error deleting feedback entry document: {e}", exc_info=True)
         raise RuntimeError("Failed to delete feedback entry document") from e
 
+def clean_json_content(content: str) -> str:
+    """
+    Clean content by extracting only the JSON portion (from first { to last }).
+    This removes any extra text that LLMs sometimes add before or after the JSON.
+    
+    Args:
+        content: The content string to clean
+        
+    Returns:
+        Cleaned content with only the JSON portion, or original if no braces found
+    """
+    if not content or not isinstance(content, str):
+        return content
+    
+    # Find first { and last }
+    first_brace = content.find('{')
+    last_brace = content.rfind('}')
+    
+    # If we found both braces and they're in the right order
+    if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
+        cleaned = content[first_brace:last_brace + 1]
+        
+        # Log if we actually cleaned something
+        if cleaned != content:
+            removed_chars = len(content) - len(cleaned)
+            logging.info(f"Cleaned JSON content: removed {removed_chars} extraneous characters")
+        
+        return cleaned
+    
+    # Return original if no braces found (might not be JSON)
+    return content
+
+
+def clean_report_content(data: dict) -> dict:
+    """
+    Recursively clean all 'content' fields in a report data structure.
+    This walks through the entire dictionary and cleans any field named 'content'.
+    
+    Args:
+        data: Dictionary that may contain 'content' fields
+        
+    Returns:
+        Dictionary with cleaned content fields
+    """
+    if isinstance(data, dict):
+        cleaned = {}
+        for key, value in data.items():
+            if key == "content" and isinstance(value, str):
+                # Clean this content field
+                cleaned[key] = clean_json_content(value)
+            elif isinstance(value, (dict, list)):
+                # Recursively clean nested structures
+                cleaned[key] = clean_report_content(value)
+            else:
+                cleaned[key] = value
+        return cleaned
+    elif isinstance(data, list):
+        # Clean each item in the list
+        return [clean_report_content(item) for item in data]
+    else:
+        return data
+
+
 def generate_tags_from_content(content: str, max_tags: int = 20) -> List[str]:
     """
     Generate tags from response content by extracting key terms and phrases.
@@ -423,7 +464,7 @@ async def search_responses_by_tags(search_terms: List[str], user_id: Optional[st
         limit: Maximum number of results to return
         
     Returns:
-        List of matching response documents
+        List of matching response documents with LLM metadata
     """
     def _query():
         query = db.collection("agent_responses")
@@ -461,7 +502,11 @@ async def search_responses_by_tags(search_terms: List[str], user_id: Optional[st
                     "user_id": d.get("user_id"),
                     "response_id": d.get("response_id"),
                     "timestamp": d.get("timestamp"),
-                    "tags": d.get("tags", [])
+                    "tags": d.get("tags", []),
+                    "llm_provider": d.get("llm_provider"),
+                    "llm_model": d.get("llm_model"),
+                    "content_length": d.get("content_length"),
+                    "content_status": d.get("content_status", "unknown")
                 }
                 matching_responses.append(response_data)
                 
@@ -544,7 +589,7 @@ async def get_feedback(
 
 
 async def store_report(report: ReportModel) -> str:
-    """Store new report in Firestore database."""
+    """Store new report in Firestore database with cleaned content fields."""
     try:
         col = db.collection("reports")
         doc_ref = col.document()
@@ -557,9 +602,12 @@ async def store_report(report: ReportModel) -> str:
             "updated_at": firestore.SERVER_TIMESTAMP
         })
         
+        # Clean all content fields before storing
+        report_data = clean_report_content(report_data)
+        
         doc_ref.set(report_data)
         doc_id = doc_ref.id
-        logging.info(f"Report document created with ID: {doc_id}")
+        logging.info(f"Report document created with ID: {doc_id} (content fields cleaned)")
         return doc_id
     except Exception as e:
         logging.error(f"Error writing report to Firestore: {e}", exc_info=True)
@@ -633,7 +681,7 @@ async def update_report(report_id: str, updates: dict) -> bool:
 
 
 async def update_report_section(report_id: str, section_id: str, content: str, status: str = "completed") -> bool:
-    """Update a specific section of a report."""
+    """Update a specific section of a report with cleaned content."""
     try:
         doc_ref = db.collection("reports").document(report_id)
         doc = doc_ref.get()
@@ -644,11 +692,14 @@ async def update_report_section(report_id: str, section_id: str, content: str, s
         report_data = doc.to_dict()
         sections = report_data.get("sections", [])
         
+        # Clean the content before updating
+        cleaned_content = clean_json_content(content)
+        
         # Find and update the section
         section_updated = False
         for section in sections:
             if section.get("section_id") == section_id:
-                section["content"] = content
+                section["content"] = cleaned_content
                 section["status"] = status
                 section["last_updated"] = firestore.SERVER_TIMESTAMP
                 section_updated = True
@@ -663,7 +714,7 @@ async def update_report_section(report_id: str, section_id: str, content: str, s
             "updated_at": firestore.SERVER_TIMESTAMP
         })
         
-        logging.info(f"Section {section_id} in report {report_id} updated successfully")
+        logging.info(f"Section {section_id} in report {report_id} updated successfully (content cleaned)")
         return True
     except Exception as e:
         logging.error(f"Error updating report section: {e}", exc_info=True)
