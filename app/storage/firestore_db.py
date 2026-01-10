@@ -1,5 +1,6 @@
 from typing import Union, List, Optional
 import logging
+from datetime import datetime
 import firebase_admin
 from firebase_admin import firestore, credentials
 import orjson
@@ -701,7 +702,7 @@ async def update_report_section(report_id: str, section_id: str, content: str, s
             if section.get("section_id") == section_id:
                 section["content"] = cleaned_content
                 section["status"] = status
-                section["last_updated"] = firestore.SERVER_TIMESTAMP
+                section["last_updated"] = datetime.now()
                 section_updated = True
                 break
         
