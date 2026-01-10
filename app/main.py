@@ -732,6 +732,8 @@ async def generate_report(request: ReportGenerationRequest) -> ReportResponse:
     Returns:
         ReportResponse with success status and generated report
     """
+    report_id = None
+    report = None
     try:
         from .agent_schema.agent_master_schema import ReportModel, ReportSection
         from .reports.report_generation_service import bounded_generate_section, generate_section
@@ -799,6 +801,21 @@ async def generate_report(request: ReportGenerationRequest) -> ReportResponse:
             ),
         ]
 
+        # Create the report object EARLY to ensure we have an ID and initial state
+        report = ReportModel(
+            title=request.title,
+            description=request.description
+            or "Calnetix Defense & Power Systems Market Intelligence Report",
+            user_id=request.user_id,
+            sections=market_research_sections,
+            status="generating",
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+        )
+
+        # Store the report immediately
+        report_id = await store_report(report)
+
         # Generate content for each section
         orchestrator = AgentOrchestrator()
 
@@ -814,7 +831,7 @@ async def generate_report(request: ReportGenerationRequest) -> ReportResponse:
 
             # Update original sections
             for updated in updated_sections:
-                for original in market_research_sections:
+                for original in report.sections:
                     if original.section_id == updated.section_id:
                         original.content = updated.content
                         original.status = updated.status
@@ -822,31 +839,31 @@ async def generate_report(request: ReportGenerationRequest) -> ReportResponse:
                         original.last_updated = updated.last_updated
                         break
         else:
-            # Sequential fallback with error handling
-            for section in market_research_sections:
+            # Sequential fallback with error handling and INCREMENTAL SAVING
+            for section in report.sections:
                 try:
                     await generate_section(section, orchestrator, request, app.state, section_cache)
+                    # Save progress after each section
+                    await update_report_section(report_id, section.section_id, section.content, "completed")
                 except Exception as e:
                     logger.error(f"Error generating section {getattr(section, 'title', 'unknown')}: {e}")
                     section.content = f"Error generating content: {str(e)}"
                     section.status = "error"
+                    # Save error state for this section
+                    await update_report_section(report_id, section.section_id, section.content, "error")
 
-        # Create the report using market research template structure
-        report = ReportModel(
-            title=request.title,
-            description=request.description
-            or "Calnetix Defense & Power Systems Market Intelligence Report",
-            user_id=request.user_id,
-            sections=market_research_sections,
-            status="draft",
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
-        )
+        # Update final status
+        report.status = "completed"
+        report.updated_at = datetime.now()
+        
+        # Update the report in the database with all sections and final status
+        await update_report(report_id, {
+            "sections": [s.model_dump() for s in report.sections],
+            "status": "completed",
+            "updated_at": datetime.now()
+        })
 
-        # Store the report
-        report_id = await store_report(report)
-
-        # Add the report_id to the report object
+        # Add the report_id to the report object for response
         report_dict = report.model_dump()
         report_dict["report_id"] = report_id
 
@@ -859,6 +876,31 @@ async def generate_report(request: ReportGenerationRequest) -> ReportResponse:
 
     except Exception as e:
         logger.error(f"Error generating report: {e}")
+        
+        if report_id and report:
+            # If we have a report, try to save its current state with error status
+            try:
+                report.status = "error"
+                report.updated_at = datetime.now()
+                await update_report(report_id, {
+                    "sections": [s.model_dump() for s in report.sections],
+                    "status": "error",
+                    "updated_at": datetime.now()
+                })
+                
+                # Return partial success/failure with report ID so user can see what happened
+                report_dict = report.model_dump()
+                report_dict["report_id"] = report_id
+                
+                return ReportResponse(
+                    success=False, 
+                    message=f"Error generating report: {str(e)}",
+                    report_id=report_id,
+                    report=report_dict
+                )
+            except Exception as save_error:
+                logger.error(f"Error saving failed report state: {save_error}")
+        
         return ReportResponse(
             success=False, message=f"Error generating report: {str(e)}"
         )
