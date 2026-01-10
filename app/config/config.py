@@ -122,7 +122,7 @@ class PerplexityClient:
     def load_model(self, model: int):
         """Loads the specified Perplexity model."""
         try:
-            model_name = perplexity_models[model]
+            model_name = perplexity_models[0]
             return model_name
         except IndexError:
             raise ValueError(
