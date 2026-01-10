@@ -8,6 +8,7 @@ from datetime import datetime
 from ..agent_schema.agent_master_schema import AgentCallModel, ReportGenerationRequest
 from ..orchestrator.agent_orchestrator import AgentOrchestrator
 from ..context.context_injector import ContextInjector
+from ..storage.firestore_db import update_report_section
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +54,8 @@ async def generate_section(
     orchestrator: AgentOrchestrator,
     report_req: ReportGenerationRequest,
     app_state: Any,
-    section_cache: Dict[str, Any]
+    section_cache: Dict[str, Any],
+    report_id: str = None
 ) -> Any:
     """
     Generate content for a single report section.
@@ -64,6 +66,7 @@ async def generate_section(
         report_req: The report generation request
         app_state: Application state containing templates
         section_cache: Cache for section responses
+        report_id: Optional ID of the report to update incrementally
         
     Returns:
         The updated section with generated content
@@ -111,6 +114,14 @@ async def generate_section(
     )
     section.last_updated = datetime.now()
 
+    # Incrementally save if report_id provided
+    if report_id:
+        try:
+            await update_report_section(report_id, section.section_id, section.content, "completed")
+            logger.info(f"Incrementally saved section {section.title} to report {report_id}")
+        except Exception as e:
+            logger.error(f"Failed to incrementally save section {section.title}: {e}")
+
     return section
 
 
@@ -120,7 +131,8 @@ async def bounded_generate_section(
     orchestrator: AgentOrchestrator,
     report_req: ReportGenerationRequest,
     app_state: Any,
-    section_cache: Dict[str, Any]
+    section_cache: Dict[str, Any],
+    report_id: str = None
 ) -> Any:
     """
     Generate a section with concurrency limiting via semaphore.
@@ -132,6 +144,7 @@ async def bounded_generate_section(
         report_req: The report generation request
         app_state: Application state
         section_cache: Cache for section responses
+        report_id: Optional ID of the report to update incrementally
         
     Returns:
         The updated section
@@ -139,7 +152,7 @@ async def bounded_generate_section(
     async with semaphore:
         try:
             return await generate_section(
-                section, orchestrator, report_req, app_state, section_cache
+                section, orchestrator, report_req, app_state, section_cache, report_id
             )
         except Exception as e:
             logger.error(
@@ -147,4 +160,12 @@ async def bounded_generate_section(
             )
             section.content = f"Error generating content: {str(e)}"
             section.status = "error"
+            
+            # Save error state incrementally
+            if report_id:
+                try:
+                    await update_report_section(report_id, section.section_id, section.content, "error")
+                except Exception as save_err:
+                    logger.error(f"Failed to incrementally save error for section {section.title}: {save_err}")
+            
             return section

@@ -824,7 +824,7 @@ async def generate_report(request: ReportGenerationRequest) -> ReportResponse:
             semaphore = asyncio.Semaphore(4)
 
             tasks = [
-                bounded_generate_section(section, semaphore, orchestrator, request, app.state, section_cache)
+                bounded_generate_section(section, semaphore, orchestrator, request, app.state, section_cache, report_id)
                 for section in market_research_sections
             ]
             updated_sections = await asyncio.gather(*tasks)
@@ -842,9 +842,7 @@ async def generate_report(request: ReportGenerationRequest) -> ReportResponse:
             # Sequential fallback with error handling and INCREMENTAL SAVING
             for section in report.sections:
                 try:
-                    await generate_section(section, orchestrator, request, app.state, section_cache)
-                    # Save progress after each section
-                    await update_report_section(report_id, section.section_id, section.content, "completed")
+                    await generate_section(section, orchestrator, request, app.state, section_cache, report_id)
                 except Exception as e:
                     logger.error(f"Error generating section {getattr(section, 'title', 'unknown')}: {e}")
                     section.content = f"Error generating content: {str(e)}"
