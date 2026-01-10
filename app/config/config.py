@@ -12,8 +12,6 @@ import httpx
 
 
 def get_secret(secret):
-    # credential_path = "app/config/api-project.json"
-    # Set the environment variable for authentication
     
     client = secretmanager.SecretManagerServiceClient()
     project_id = "api-project-371618"
